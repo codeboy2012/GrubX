@@ -1,0 +1,63 @@
+{
+  "cli": {
+    "version": ">= 13.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "phone-production": {
+      "autoIncrement": true,
+      "android": {
+        "buildType": "apk"
+      },
+      "ios": {
+        "image": "macos-sequoia-Xcode-16.4",
+        "resourceClass": "m-medium"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_BASE": "https://grub.sky0cloud.dpdns.org",
+        "GRUBX_DEVICE_KIND": "phone"
+      }
+    },
+    "tv-production": {
+      "autoIncrement": true,
+      "android": {
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleRelease"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_BASE": "https://grub.sky0cloud.dpdns.org",
+        "GRUBX_DEVICE_KIND": "tv"
+      }
+    },
+    "ios-unsigned": {
+      "autoIncrement": true,
+      "ios": {
+        "image": "macos-sequoia-Xcode-16.4",
+        "resourceClass": "m-medium",
+        "simulator": false
+      },
+      "env": {
+        "EXPO_PUBLIC_API_BASE": "https://grub.sky0cloud.dpdns.org",
+        "GRUBX_DEVICE_KIND": "phone"
+      }
+    },
+    "tvos-production": {
+      "autoIncrement": true,
+      "ios": {
+        "image": "macos-sequoia-Xcode-16.4",
+        "resourceClass": "m-medium"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_BASE": "https://grub.sky0cloud.dpdns.org",
+        "GRUBX_DEVICE_KIND": "tv"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

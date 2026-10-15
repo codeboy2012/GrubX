@@ -1,0 +1,14 @@
+.aider*
+/node_modules
+/.next
+/out
+/dist
+tsconfig.tsbuildinfo
+.env
+.env.local
+.env.*.local
+.next-dev.log
+.next-dev.err.log
+.tmp/
+release/
+.freebuff/

@@ -1,0 +1,2211 @@
+
+Documentation
+
+--------------------------------------------------
+https://vidfast.vc/
+--------------------------------------------------
+
+Movie Embed
+Endpoint
+
+Copy
+https://vidfast.vc/movie/{id}?autoPlay=true
+Required Parameters
+{id}Movie identifier from IMDB or TMDB
+Optional Parameters
+title Controls whether the media title is displayed
+poster Determines if the poster image is shown
+autoPlay Controls whether the media starts playing automatically
+startAt Starts the video at the specified time in seconds
+theme Changes the player's color (hex code format)
+server Changes the default server for the player (set to server name)
+hideServer Controls whether the server selector button is shown or hidden
+fullscreenButton Controls whether the fullscreen button is shown or hidden
+chromecast Controls whether the Chromecast button is shown or hidden
+subSets the default subtitle (e.g. en, es, fr)
+Examples
+https://vidfast.vc/movie/tt6263850
+
+https://vidfast.vc/movie/533535?theme=16A085
+
+TV Show Embed
+Endpoint
+
+Copy
+https://vidfast.vc/tv/{id}/{season}/{episode}?autoPlay=true
+Required Parameters
+{id}TV show identifier from IMDB or TMDB
+{season}The season number
+{episode}The episode number
+Optional Parameters
+title Controls whether the media title is displayed
+poster Determines if the poster image is shown
+autoPlay Controls whether the media starts playing automatically
+startAt Starts the video at the specified time in seconds
+theme Changes the player's color (hex code format)
+nextButtonDisplays the "Next Episode" button when 90% of the current episode has been watched
+autoNext Automatically plays the next episode when the current one ends (requires nextButton)
+server Changes the default server for the player (set to server name)
+hideServer Controls whether the server selector button is shown or hidden
+fullscreenButton Controls whether the fullscreen button is shown or hidden
+chromecast Controls whether the Chromecast button is shown or hidden
+subSets the default subtitle (e.g. en, es, fr)
+Examples
+https://vidfast.vc/tv/tt4052886/1/5
+
+https://vidfast.vc/tv/63174/1/5?nextButton=true&autoNext=true
+
+Basic Implementation
+Copy and paste this code into your HTML where you want the player to appear:
+
+<iframe 
+  src="https://vidfast.vc/movie/533535" 
+  width="100%" 
+  height="100%" 
+  frameborder="0" 
+  allowfullscreen 
+  allow="encrypted-media"
+></iframe>
+
+Copy code
+
+Responsive Implementation
+Wrap the iframe in this container to maintain the correct 16:9 aspect ratio:
+
+<!-- 16:9 Aspect Ratio Container -->
+<div style="position: relative; padding-bottom: 56.25%; height: 0;">
+  <iframe
+    src="https://vidfast.vc/movie/533535"
+    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
+    frameborder="0"
+    allowfullscreen
+    allow="encrypted-media"
+  ></iframe>
+</div>
+
+Copy code
+Responsive with Tailwind CSS
+<div className="relative w-full pt-[56.25%]">
+  <iframe
+    src="https://vidfast.vc/movie/533535"
+    className="absolute top-0 left-0 w-full h-full"
+    frameBorder="0"
+    allowFullScreen
+    allow="encrypted-media"
+  ></iframe>
+</div>
+
+Copy code
+
+Color Themes
+Customize the player's color by adding the theme parameter:
+
+Green Theme
+<iframe
+  src="https://vidfast.vc/movie/533535?theme=16A085"
+></iframe>
+#16A085
+
+Copy
+Blue Theme
+<iframe
+  src="https://vidfast.vc/movie/533535?theme=2980B9"
+></iframe>
+#2980B9
+
+Copy
+Purple Theme
+<iframe
+  src="https://vidfast.vc/movie/533535?theme=9B59B6"
+></iframe>
+#9B59B6
+
+Advanced Features
+Complete Feature Example
+<iframe
+  src="https://vidfast.vc/tv/tt4052886/1/5?autoPlay=true&title=true&poster=true&theme=16A085&nextButton=true&autoNext=true"
+  width="100%"
+  height="100%"
+  frameborder="0"
+  allowfullscreen
+  allow="encrypted-media"
+></iframe>
+
+Copy complete example
+Feature Compatibility Matrix
+Feature	Movies	TV Shows
+Color Themes	✓	✓
+AutoPlay	✓	✓
+Start Time	✓	✓
+Poster Display	✓	✓
+Next Episode	✗	✓
+Auto Next	✗	✓
+
+Events & Progress Tracking
+The player can send watch progress events to the parent window. You can save this progress to localStorage or your own backend.
+
+Available Events
+playTriggered when video starts playing
+pauseTriggered when video is paused
+seekedTriggered when user seeks to a different timestamp
+endedTriggered when video playback ends
+timeupdateTriggered periodically during playback
+playerstatusTriggered when getStatus is called
+Event Data Structure
+{
+    type: "PLAYER_EVENT",
+    data: {
+        event: "play" | "pause" | "seeked" | "ended" | "timeupdate" | "playerstatus",
+        currentTime: number,
+        duration: number,
+        tmdbId: number,
+        mediaType: "movie" | "tv",
+        season?: number,
+        episode?: number,
+        playing: bool,
+        muted: bool,
+        volume: number
+    }
+}
+
+Event Listener Implementation
+Add this script where your iframe is located. For React/Next.js, place it in a useEffect hook.
+
+const vidfastOrigins = [
+    'https://vidfast.pro',
+    'https://vidfast.in',
+    'https://vidfast.io',
+    'https://vidfast.me',
+    'https://vidfast.net',
+    'https://vidfast.pm',
+    'https://vidfast.vc',
+    'https://vidfast.bz'
+];
+
+window.addEventListener('message', ({ origin, data }) => {
+    if (!vidfastOrigins.includes(origin) || !data) {
+        return;
+    }
+
+    if (data.type === 'PLAYER_EVENT') {
+        const { event, currentTime, duration } = data.data;
+
+        console.log(`Player ${event} at ${currentTime}s of ${duration}s`);
+
+        // Add custom event handling logic here
+    }
+});
+
+Direct Media Data Event Listener
+This simpler event listener directly captures and stores the complete media data structure:
+
+const vidfastOrigins = [
+    'https://vidfast.pro',
+    'https://vidfast.in',
+    'https://vidfast.io',
+    'https://vidfast.me',
+    'https://vidfast.net',
+    'https://vidfast.pm',
+    'https://vidfast.xyz',
+    'https://vidfast.vc',
+    'https://vidfast.bz'
+];
+
+window.addEventListener('message', ({ origin, data }) => {
+    if (!vidfastOrigins.includes(origin) || !data) {
+        return;
+    }
+
+    if (data.type === 'MEDIA_DATA') {
+        localStorage.setItem('vidFastProgress', JSON.stringify(data.data));
+    }
+});
+
+Stored Data Structure Example
+The data is stored in localStorage and contains movie/show details, watch progress, and episode-specific progress for TV shows.
+
+{
+    "t63174": {
+        "id": 63174,
+        "type": "tv",
+        "title": "Lucifer",
+        "poster_path": "/ekZobS8isE6mA53RAiGDG93hBxL.jpg",
+        "backdrop_path": "/wbiPjTWpZMIB8ffBq7HvzAph4Ft.jpg",
+        "progress": {
+            "watched": 793.207692,
+            "duration": 2695.3689
+        },
+        "last_season_watched": 1,
+        "last_episode_watched": 1,
+        "show_progress": {
+            "s1e1": {
+                "season": 1,
+                "episode": 1,
+                "progress": {
+                    "watched": 793.207692,
+                    "duration": 2695.3689
+                },
+                "last_updated": 1742578021768
+            }
+        },
+        "last_updated": 1742578021768
+    },
+    "m533535": {
+        "id": 533535,
+        "type": "movie",
+        "title": "Deadpool & Wolverine",
+        "poster_path": "/8cdWjvZQUExUUTzyp4t6EDMubfO.jpg",
+        "backdrop_path": "/by8z9Fe8y7p4jo2YlW2SZDnptyT.jpg",
+        "progress": {
+            "watched": 353.530349,
+            "duration": 7667.227
+        },
+        "last_updated": 1742577064433
+    }
+}
+
+PostMessage API Control
+Control VidFast players programmatically using the PostMessage API. Perfect for watch party features and custom player integrations.
+
+Available Commands
+play
+Resume video playback
+iframe.contentWindow.postMessage({
+    command: 'play'
+}, '*');
+pause
+Pause video playback
+iframe.contentWindow.postMessage({
+    command: 'pause'
+}, '*');
+seek
+Jump to specific time in video (seconds)
+iframe.contentWindow.postMessage({
+    command: 'seek',
+    time: 120  // Jump to 2 minutes
+}, '*');
+volume
+Set player volume (0.0 to 1.0)
+iframe.contentWindow.postMessage({
+    command: 'volume',
+    level: 0.5  // Set to 50% volume
+}, '*');
+mute
+Toggle mute state
+iframe.contentWindow.postMessage({
+    command: 'mute',
+    muted: true  // true to mute, false to unmute
+}, '*');
+getStatus
+Get current player status
+iframe.contentWindow.postMessage({
+    command: 'getStatus'
+}, '*');
+
+// Listen for response
+window.addEventListener('message', ({ data }) => {
+    if (data.type === 'PLAYER_EVENT' && data.data.event === 'playerstatus') {
+        console.log('Current time:', data.data.currentTime);
+        console.log('Duration:', data.data.duration);
+        console.log('Is playing:', data.data.playing);
+        console.log('Is muted:', data.data.muted);
+        console.log('Volume:', data.data.volume);
+    }
+});
+Watch Party Integration Example
+Perfect for synchronizing video playback across multiple users in a watch party scenario.
+
+// Watch Party Controller Example
+class WatchPartyController {
+    vidfastOrigins = [
+        'https://vidfast.pro',
+        'https://vidfast.in',
+        'https://vidfast.io',
+        'https://vidfast.me',
+        'https://vidfast.net',
+        'https://vidfast.pm',
+        'https://vidfast.xyz',
+        'https://vidfast.vc',
+        'https://vidfast.bz'
+    ]
+
+    constructor(iframeElement) {
+        this.iframe = iframeElement;
+        this.setupEventListeners();
+    }
+
+    // Sync play command to all participants
+    syncPlay(time) {
+        this.iframe.contentWindow.postMessage({
+            command: 'play',
+            time: time
+        }, '*');
+
+        // Broadcast to other participants
+        this.broadcastToParty({
+            action: 'play',
+            time: time
+        });
+    }
+
+    // Sync pause command to all participants
+    syncPause(time) {
+        this.iframe.contentWindow.postMessage({
+            command: 'pause',
+            time: time
+        }, '*');
+
+        this.broadcastToParty({
+            action: 'pause',
+            time: time
+        });
+    }
+
+    // Sync seek to specific time for all participants
+    syncSeek(time) {
+        this.iframe.contentWindow.postMessage({
+            command: 'seek',
+            time: time
+        }, '*');
+
+        this.broadcastToParty({
+            action: 'seek',
+            time: time
+        });
+    }
+
+    // Handle incoming party commands
+    handlePartyCommand(command) {
+        switch (command.action) {
+            case 'play':
+                this.iframe.contentWindow.postMessage({
+                    command: 'play'
+                }, '*');
+                break;
+            case 'pause':
+                this.iframe.contentWindow.postMessage({
+                    command: 'pause'
+                }, '*');
+                break;
+            case 'seek':
+                this.iframe.contentWindow.postMessage({
+                    command: 'seek',
+                    time: command.time
+                }, '*');
+                break;
+        }
+    }
+
+    broadcastToParty(command) {
+        // Your party synchronization logic here
+        // (WebSocket, Socket.IO, etc.)
+    }
+
+    onPlayerStatusUpdate(status) {
+        // Your status update logic here
+    }
+
+    setupEventListeners() {
+        // Listen for player events
+        window.addEventListener('message', (event) => {
+            if (!this.vidfastOrigins.includes(event.origin) || !event.data) {
+                return;
+            }
+
+            if (event.data.type === 'PLAYER_EVENT') {
+                const {
+                    event: playerEvent,
+                    currentTime
+                } = event.data.data;
+
+                switch (playerEvent) {
+                    case 'play':
+                        this.syncPlay(currentTime);
+                        break;
+                    case 'pause':
+                        this.syncPause(currentTime);
+                        break;
+                    case 'seeked':
+                        this.syncSeek(currentTime);
+                        break;
+                }
+            }
+
+            if (event.data.type === 'PLAYER_EVENT' && event.data.data.event === 'playerstatus') {
+                this.onPlayerStatusUpdate(event.data.data);
+            }
+        });
+    }
+}
+
+// Usage
+const iframe = document.querySelector('#vidfast-player');
+const watchParty = new WatchPartyController(iframe);
+⚠️ Important Notes
+• PostMessage commands work across all VidFast domains
+• Commands are processed asynchronously - status responses may have a small delay
+• For watch parties, implement proper synchronization logic to handle network latency
+• Always handle message events to receive player status updates
+• Seek commands accept time in seconds (integer values)
+
+--------------------------------------------------
+https://vidlink.pro/
+--------------------------------------------------
+
+Api Documentation
+Embed Movies
+
+TmdbId is required from The Movie Database API.
+https://vidlink.pro/movie/{tmdbId}
+Code Example:
+<iframe src="https://vidlink.pro/movie/786892" frameborder="0" allowfullscreen ></iframe>
+Embed Shows
+
+TmdbId is required from The Movie DatabaseAPI. season and episode number should not be empty.
+https://vidlink.pro/tv/{tmdbId}/{season}/{episode}
+Code Example:
+<iframe src="https://vidlink.pro/tv/94997/1/1" frameborder="0" allowfullscreen ></iframe>
+Embed Anime
+New
+
+MyAnimeList id is required from MyAnimeListAPI. number and type should not be empty.
+https://vidlink.pro/anime/{MALid}/{number}/{subOrDub}
+Add ?fallback=true to force fallback to sub and vice versa if the type you set was not found.
+https://vidlink.pro/anime/{MALid}/{number}/{subOrDub}?fallback=true
+Code Example:
+<iframe src="https://vidlink.pro/anime/5/1/sub" frameborder="0" allowfullscreen ></iframe>
+Customization Parameters
+You can customize the embedded media player by appending parameters to the URL. Each parameter should start with a ? and multiple parameters should be separated by &.
+Use Hex Color Codesand remove the '#' before applying.
+primaryColor
+Sets the primary color of the player, including sliders and autoplay controls.
+
+primaryColor=B20710
+secondaryColor
+Defines the color of the progress bar behind the sliders.
+
+secondaryColor=170000
+icons
+Changes the design of the icons within the player. can be either "vid" or "default".
+
+icons=vid
+Example of "vid" icons:
+iconColor
+Changes the color of the icons within the player.
+
+iconColor=B20710
+title
+Controls whether the media title is displayed.
+
+title=false
+poster
+Determines if the poster image is shown.
+
+poster=true
+autoplay
+Controls whether the media starts playing automatically.
+
+autoplay=false
+Next Episode button
+Shows next episode button when 90% of the Tv-show is watched. OFF by default.
+
+nextbutton=true
+Player typeNew
+Changes the player to JWPlayer or default player.
+
+player=jw
+startAtNew
+Starts the video at the specified time in seconds. This parameter cannot replace saved progress but can be used for cross-device watch progress. remove cookies and cache after each test for the same content.
+
+startAt=60
+sub_fileNew
+Adds external subtitles to the video. Must be a direct link to a VTT subtitle file.
+
+sub_file=https://example.com/subtitles.vtt
+sub_labelNew
+Sets the label for the external subtitle track. If not provided, defaults to 'External Subtitle'.
+
+sub_label=English
+fallback_urlNew
+Redirect URL when stream fails to load. If the stream is unavailable, the player will redirect to this URL.
+
+fallback_url=https://example.com/fallback
+Customize Player
+
+Generated URL
+
+Copy
+https://vidlink.pro/tv/94605/2/1?primaryColor=63b8bc&secondaryColor=a2a2a2&iconColor=eefdec&icons=default&player=default&title=true&poster=true&autoplay=false&nextbutton=false
+VidLink Player
+Custom player with full customization
+
+Custom Colors
+Custom Icons
+Title Overlay
+Next Episode Button
+JW Player
+Professional video player
+
+Professional UI
+Fast Loading
+Basic Controls
+Customizable
+Colors
+Primary Color
+
+#
+63b8bc
+
+Secondary Color
+
+#
+a2a2a2
+
+Icon Color
+
+#
+eefdec
+
+Options
+Icons Style
+Default
+Icons Style
+Default
+Watch Progress
+Continue Watching Feature
+Track your users' watch progress across movies and TV shows. This feature enables "Continue Watching" functionality on your website.
+
+1
+Add Event Listener
+Add this script where your iframe is located. For React/Next.js applications, place it in a useEffect hook.
+
+Script
+
+Copy
+window.addEventListener('message', (event) => {
+  if (event.origin !== 'https://vidlink.pro') return;
+  
+  if (event.data?.type === 'MEDIA_DATA') {
+    const mediaData = event.data.data;
+    localStorage.setItem('vidLinkProgress', JSON.stringify(mediaData));
+  }
+});
+2
+Stored Data Structure
+The data is stored in localStorage and contains:
+
+Movie/Show details (title, poster, etc.)
+Watch progress (time watched, duration)
+Last watched episode for TV shows
+Episode-specific progress for shows
+Example Data Structure
+
+Copy
+{
+  "76479": {
+    "id": 76479,
+    "type": "tv",
+    "title": "The Boys",
+    "poster_path": "/2zmTngn1tYC1AvfnrFLhxeD82hz.jpg",
+    "progress": {
+      "watched": 31.435372,
+      "duration": 3609.867
+    },
+    "last_season_watched": "1",
+    "last_episode_watched": "1",
+    "show_progress": {
+      "s1e1": {
+        "season": "1",
+        "episode": "1",
+        "progress": {
+          "watched": 31.435372,
+          "duration": 3609.867
+        }
+      }
+    }
+  },
+  "786892": {
+    "id": 786892,
+    "type": "movie",
+    "title": "Furiosa: A Mad Max Saga",
+    "poster_path": "/iADOJ8Zymht2JPMoy3R7xceZprc.jpg",
+    "backdrop_path": "/wNAhuOZ3Zf84jCIlrcI6JhgmY5q.jpg",
+    "progress": {
+      "watched": 8726.904767,
+      "duration": 8891.763
+    },
+    "last_updated": 1725723972695
+  }
+}
+Player Events
+New
+Player Event Tracking
+Listen to player events to track user interactions and video playback states. Events are sent via postMessage to the parent window.
+
+Available Events
+play
+Triggered when video starts playing
+pause
+Triggered when video is paused
+seeked
+Triggered when user seeks to a different timestamp
+ended
+Triggered when video playback ends
+timeupdate
+Triggered periodically during playback
+Event Data Structure
+Event Object
+
+Copy
+{
+  type: "PLAYER_EVENT",
+  data: {
+    event: "play" | "pause" | "seeked" | "ended" | "timeupdate",
+    currentTime: number,
+    duration: number,
+    mtmdbId: number,
+    mediaType: "movie" | "tv",
+    season?: number,
+    episode?: number
+  }
+}
+Implementation Example
+window.addEventListener('message', (event) => {
+  if (event.origin !== 'https://vidlink.pro') return;
+  
+  if (event.data?.type === 'PLAYER_EVENT') {
+    const { event: eventType, currentTime, duration } = event.data.data;
+    // Handle the event
+    console.log(`Player ${eventType} at ${currentTime}s of ${duration}s`);
+  }
+});
+
+Customize Player
+
+Generated URL
+
+Copy
+https://vidlink.pro/tv/94605/2/1?primaryColor=63b8bc&secondaryColor=a2a2a2&iconColor=eefdec&icons=default&player=jw&title=true&poster=true&autoplay=false&nextbutton=false
+VidLink Player
+Custom player with full customization
+
+Custom Colors
+Custom Icons
+Title Overlay
+Next Episode Button
+JW Player
+Professional video player
+
+Professional UI
+Fast Loading
+Basic Controls
+Customizable
+Colors
+Primary Color
+
+#
+63b8bc
+
+Secondary Color
+
+#
+a2a2a2
+
+Icon Color
+
+#
+eefdec
+
+Options
+Icons Style
+Default
+Icons Style
+Default
+Note: While all customization options are available, some features might have limited or no effect when using JW Player.
+
+--------------------------------------------------
+https://vidcore.io/
+--------------------------------------------------
+
+Movie Embed
+TV Show Embed
+Endpoint
+GET
+https://vidcore.io/movie/{id}?autoPlay=true
+
+Required Parameters
+{id}
+Movie identifier from IMDB or TMDB
+Optional Parameters
+title
+Controls whether the media title is displayed
+poster
+Determines if the poster image is shown
+autoPlay
+Controls whether the media starts playing automatically
+startAt
+Starts the video at the specified time in seconds
+theme
+Changes the player's color (hex code format)
+server
+Changes the default server for the player (set to server name)
+hideServer
+Controls whether the server selector button is shown or hidden
+fullscreenButton
+Controls whether the fullscreen button is shown or hidden
+chromecast
+Controls whether the Chromecast button is shown or hidden
+sub
+Sets the default subtitle (e.g. en, es, fr)
+Examples
+Basic usage with IMDB ID
+Copy
+https://vidcore.io/movie/tt6263850
+With custom theme color
+Copy
+https://vidcore.io/movie/533535?theme=16A085
+With autoplay and subtitles
+Copy
+https://vidcore.io/movie/533535?autoPlay=true&sub=en
+Quick Implementation
+<iframe 
+  src="https://vidcore.io/movie/{id}" 
+  width="100%" 
+  height="100%" 
+  frameborder="0" 
+  allowfullscreen 
+  allow="encrypted-media"
+></iframe>
+
+Movie Embed
+TV Show Embed
+Endpoint
+GET
+https://vidcore.io/tv/{id}/{season}/{episode}?autoPlay=true
+
+Required Parameters
+{id}
+TV show identifier from IMDB or TMDB
+{season}
+The season number
+{episode}
+The episode number
+Optional Parameters
+title
+Controls whether the media title is displayed
+poster
+Determines if the poster image is shown
+autoPlay
+Controls whether the media starts playing automatically
+startAt
+Starts the video at the specified time in seconds
+theme
+Changes the player's color (hex code format)
+nextButton
+Displays the 'Next Episode' button when 90% of the current episode has been watched
+autoNext
+Automatically plays the next episode when the current one ends (requires nextButton)
+server
+Changes the default server for the player (set to server name)
+hideServer
+Controls whether the server selector button is shown or hidden
+fullscreenButton
+Controls whether the fullscreen button is shown or hidden
+chromecast
+Controls whether the Chromecast button is shown or hidden
+sub
+Sets the default subtitle (e.g. en, es, fr)
+Examples
+Basic usage with IMDB ID
+Copy
+https://vidcore.io/tv/tt4052886/1/5
+With auto-next episode
+Copy
+https://vidcore.io/tv/63174/1/5?nextButton=true&autoNext=true
+With theme and autoplay
+Copy
+https://vidcore.io/tv/63174/2/1?theme=16A085&autoPlay=true
+Quick Implementation
+<iframe 
+  src="https://vidcore.io/movie/{id}" 
+  width="100%" 
+  height="100%" 
+  frameborder="0" 
+  allowfullscreen 
+  allow="encrypted-media"
+></iframe>
+
+Embed VidCore players on any website using a standard HTML iframe. No JavaScript SDK required — just copy the code below and replace the IDs.
+
+Movie Player
+Copy
+<iframe 
+  src="https://vidcore.io/movie/{id}" 
+  width="100%" 
+  height="100%" 
+  frameborder="0" 
+  allowfullscreen 
+  allow="encrypted-media"
+></iframe>
+TV Show Player
+Copy
+<iframe 
+  src="https://vidcore.io/tv/{id}/{season}/{episode}" 
+  width="100%" 
+  height="100%" 
+  frameborder="0" 
+  allowfullscreen 
+  allow="encrypted-media"
+></iframe>
+Responsive Embed (16:9)
+Copy
+<!-- 16:9 Aspect Ratio Container -->
+<div style="position: relative; padding-bottom: 56.25%; height: 0;">
+  <iframe
+    src="https://vidcore.io/movie/{id}"
+    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
+    frameborder="0"
+    allowfullscreen
+    allow="encrypted-media"
+  ></iframe>
+</div>
+React Component
+Copy
+const VidCorePlayer = ({ id, type = "movie", season, episode }) => (
+  <iframe
+    src={`https://vidcore.io/${type}/${id}${
+      type === "tv" ? `/${season}/${episode}` : ""
+    }?autoPlay=true`}
+    width="100%"
+    height="500px"
+    frameBorder="0"
+    allowFullScreen
+  />
+);
+Quick Implementation
+<iframe 
+  src="https://vidcore.io/movie/{id}" 
+  width="100%" 
+  height="100%" 
+  frameborder="0" 
+  allowfullscreen 
+  allow="encrypted-media"
+></iframe>
+
+Customize the VidCore player appearance and behavior by appending URL parameters to the embed URL. All parameters are optional.
+
+theme
+string
+default: default
+Changes the player accent color. Accepts a hex color code without the # prefix (e.g. theme=16A085)
+
+title
+boolean
+default: true
+Shows or hides the media title overlay in the player
+
+poster
+boolean
+default: true
+Shows or hides the poster/thumbnail image before playback begins
+
+autoPlay
+boolean
+default: false
+Starts playback automatically when the player loads. May be blocked by browser policies
+
+startAt
+number
+default: 0
+Starts the video at a specific time. Value is in seconds (e.g. startAt=120 starts at 2 minutes)
+
+sub
+string
+default: none
+Sets the default subtitle track using language codes (e.g. en, es, fr, de, pt)
+
+server
+string
+default: auto
+Sets the default streaming server. Use the exact server name as it appears in the server selector
+
+hideServer
+boolean
+default: false
+Hides the server selector button from the player controls
+
+fullscreenButton
+boolean
+default: true
+Shows or hides the fullscreen toggle button in the player
+
+chromecast
+boolean
+default: true
+Shows or hides the Chromecast/AirPlay button in the player controls
+
+nextButton
+boolean
+default: false
+TV only — Shows a 'Next Episode' button when 90% of the current episode has been watched
+
+autoNext
+boolean
+default: false
+TV only — Automatically advances to the next episode when the current one finishes. Requires nextButton=true
+
+Example with multiple parameters
+GET https://vidcore.io/movie/533535?theme=16A085&autoPlay=true&sub=en&hideServer=true
+Quick Implementation
+<iframe 
+  src="https://vidcore.io/movie/{id}" 
+  width="100%" 
+  height="100%" 
+  frameborder="0" 
+  allowfullscreen 
+  allow="encrypted-media"
+></iframe>
+
+Events & Progress Tracking
+The player can send watch progress events to the parent window. You can save this progress to localStorage or your own backend.
+
+Available Events
+play
+Triggered when video starts playing
+pause
+Triggered when video is paused
+seeked
+Triggered when user seeks to a different timestamp
+ended
+Triggered when video playback ends
+timeupdate
+Triggered periodically during playback
+playerstatus
+Triggered when getStatus is called
+Event Data Structure
+Copy
+{
+  type: "timeupdate",  // event name
+  data: {
+    currentTime: 142.5,  // current playback time in seconds
+    duration: 7200,      // total duration in seconds
+    percent: 0.02        // progress as decimal (0 to 1)
+  }
+}
+Event Listener Implementation
+Copy
+window.addEventListener("message", (event) => {
+  if (event.origin !== "https://vidcore.io") return;
+
+  const { type, data } = event.data;
+
+  if (type === "timeupdate") {
+    // Save progress every 10 seconds
+    if (Math.floor(data.currentTime) % 10 === 0) {
+      localStorage.setItem(`progress_${mediaId}`, JSON.stringify({
+        time: data.currentTime,
+        duration: data.duration,
+        percent: data.percent
+      }));
+    }
+  }
+
+  if (type === "ended") {
+    console.log("Video finished!");
+  }
+});
+Direct Media Data Event Listener
+Copy
+window.addEventListener("message", (event) => {
+  if (event.origin !== "https://vidcore.io") return;
+
+  // The player also sends direct media data
+  if (event.data?.mediaId) {
+    const { mediaId, mediaType, season, episode } = event.data;
+    console.log("Now playing:", mediaType, mediaId);
+    // season and episode are set for TV shows
+  }
+});
+Stored Data Structure Example
+Copy
+// localStorage key: "progress_{mediaId}"
+{
+  "time": 3612,       // seconds watched
+  "duration": 7200,   // total length in seconds
+  "percent": 0.5      // 50% watched
+}
+Quick Implementation
+<iframe 
+  src="https://vidcore.io/movie/{id}" 
+  width="100%" 
+  height="100%" 
+  frameborder="0" 
+  allowfullscreen 
+  allow="encrypted-media"
+></iframe>
+
+PostMessage API Control
+Control VidCore players programmatically using the PostMessage API. Perfect for watch party features and custom player integrations.
+
+Available Commands
+play
+Resume video playback
+iframe.contentWindow.postMessage({
+    command: 'play'
+}, '*');
+pause
+Pause video playback
+iframe.contentWindow.postMessage({
+    command: 'pause'
+}, '*');
+seek
+Jump to specific time in video (seconds)
+iframe.contentWindow.postMessage({
+    command: 'seek',
+    time: 120  // Jump to 2 minutes
+}, '*');
+volume
+Set player volume (0.0 to 1.0)
+iframe.contentWindow.postMessage({
+    command: 'volume',
+    level: 0.5  // Set to 50% volume
+}, '*');
+mute
+Toggle mute state
+iframe.contentWindow.postMessage({
+    command: 'mute',
+    muted: true  // true to mute, false to unmute
+}, '*');
+getStatus
+Get current player status
+iframe.contentWindow.postMessage({
+    command: 'getStatus'
+}, '*');
+
+// Listen for response
+window.addEventListener('message', ({ data }) => {
+    if (data.type === 'PLAYER_EVENT' && data.data.event === 'playerstatus') {
+        console.log('Current time:', data.data.currentTime);
+        console.log('Duration:', data.data.duration);
+        console.log('Is playing:', data.data.playing);
+        console.log('Is muted:', data.data.muted);
+        console.log('Volume:', data.data.volume);
+    }
+});
+Watch Party Integration Example
+Perfect for synchronizing video playback across multiple users in a watch party scenario.
+
+Sync Example
+Copy
+// Watch Party Controller Example
+class WatchPartyController {
+    vidcoreOrigins = [
+        'https://vidcore.io'
+    ]
+
+    constructor(iframeElement) {
+        this.iframe = iframeElement;
+        this.setupEventListeners();
+    }
+
+    // Sync play command to all participants
+    syncPlay(time) {
+        this.iframe.contentWindow.postMessage({
+            command: 'play',
+            time: time
+        }, '*');
+
+        // Broadcast to other participants
+        this.broadcastToParty({
+            action: 'play',
+            time: time
+        });
+    }
+
+    // Sync pause command to all participants
+    syncPause(time) {
+        this.iframe.contentWindow.postMessage({
+            command: 'pause',
+            time: time
+        }, '*');
+
+        this.broadcastToParty({
+            action: 'pause',
+            time: time
+        });
+    }
+
+    // Sync seek to specific time for all participants
+    syncSeek(time) {
+        this.iframe.contentWindow.postMessage({
+            command: 'seek',
+            time: time
+        }, '*');
+
+        this.broadcastToParty({
+            action: 'seek',
+            time: time
+        });
+    }
+
+    // Handle incoming party commands
+    handlePartyCommand(command) {
+        switch (command.action) {
+            case 'play':
+                this.iframe.contentWindow.postMessage({
+                    command: 'play'
+                }, '*');
+                break;
+            case 'pause':
+                this.iframe.contentWindow.postMessage({
+                    command: 'pause'
+                }, '*');
+                break;
+            case 'seek':
+                this.iframe.contentWindow.postMessage({
+                    command: 'seek',
+                    time: command.time
+                }, '*');
+                break;
+        }
+    }
+
+    broadcastToParty(command) {
+        // Your party synchronization logic here
+        // (WebSocket, Socket.IO, etc.)
+    }
+
+    onPlayerStatusUpdate(status) {
+        // Your status update logic here
+    }
+
+    setupEventListeners() {
+        // Listen for player events
+        window.addEventListener('message', (event) => {
+            if (!this.vidcoreOrigins.includes(event.origin) || !event.data) {
+                return;
+            }
+
+            if (event.data.type === 'PLAYER_EVENT') {
+                const {
+                    event: playerEvent,
+                    currentTime
+                } = event.data.data;
+
+                switch (playerEvent) {
+                    case 'play':
+                        this.syncPlay(currentTime);
+                        break;
+                    case 'pause':
+                        this.syncPause(currentTime);
+                        break;
+                    case 'seeked':
+                        this.syncSeek(currentTime);
+                        break;
+                }
+            }
+
+            if (event.data.type === 'PLAYER_EVENT' && event.data.data.event === 'playerstatus') {
+                this.onPlayerStatusUpdate(event.data.data);
+            }
+        });
+    }
+}
+
+// Usage
+const iframe = document.querySelector('#vidcore-player');
+const watchParty = new WatchPartyController(iframe);
+Quick Implementation
+<iframe 
+  src="https://vidcore.io/movie/{id}" 
+  width="100%" 
+  height="100%" 
+  frameborder="0" 
+  allowfullscreen 
+  allow="encrypted-media"
+></iframe>
+
+
+--------------------------------------------------
+https://vidrock.net/
+--------------------------------------------------
+
+API Documentation
+Embedding
+Customization
+Watch Progress
+Comprehensive API reference for embedding movies and series using TMDB or IMDB IDs.
+
+Movie Embed URL
+https://vidrock.net/movie/{tmdb_id}
+Copy
+https://vidrock.net/movie/{imdb_id}
+Copy
+Example iframe:
+<iframe src="https://vidrock.net/movie/tt4154796" allowfullscreen></iframe>
+Copy
+TV Shows Embed URL
+https://vidrock.net/tv/{tmdb_id}/{season_number}/{episode_number}
+Copy
+https://vidrock.net/tv/{imdb_id}/{season_number}/{episode_number}
+Copy
+Example iframe:
+<iframe src="https://vidrock.net/tv/tt0903747/1/1" allowfullscreen></iframe>
+Copy
+List All Movies & Series
+https://vidrock.net/list/movie.json
+Copy
+https://vidrock.net/list/tv.json
+Copy
+
+API Documentation
+Embedding
+Customization
+Watch Progress
+Available URL Parameters
+Customize the player behavior by adding these parameters to your URLs
+
+autoplay
+boolean
+default: false
+Automatically start playing the video when loaded
+
+autonext
+boolean
+default: false
+Plays next TV episode automatically
+
+theme
+hex color
+default: ffffff
+Custom accent color (without #). Changes player theme colors
+
+download
+boolean
+default: true
+Show/hide the download button in player controls
+
+nextbutton
+boolean
+default: true
+Show/hide next episode notification for TV shows
+
+episodeselector
+boolean
+default: true
+Show/hide the season/episode selector button
+
+lang
+language code
+default: browser lang
+Auto-select subtitles by language (e.g., 'en', 'es', 'fr'). Uses 2-letter ISO codes
+
+Parameter Examples
+Enable autoplay:
+?autoplay=true
+Enable autonext parameter:
+?autonext=true
+Custom red theme:
+?theme=ff6b6b
+Hide download button:
+?download=false
+Test parameters:
+https://vidrock.net/tv/1399/1/1?autoplay=true&autonext=true&theme=00ff00&download=false
+Try it
+
+API Documentation
+Embedding
+Customization
+Watch Progress
+Continue Watching Feature
+Track your users' watch progress across movies and TV shows. This feature enables "Continue Watching" functionality on your website.
+
+1. Add Event Listener
+Add this script where your iframe is located. For React/Next.js applications, place it in a useEffect hook.
+
+Script
+Copy
+window.addEventListener('message', (event) => {
+  if (event.origin !== 'https://vidrock.net') return;
+  
+  if (event.data?.type === 'MEDIA_DATA') {
+    const mediaData = event.data.data;
+    localStorage.setItem('vidRockProgress', JSON.stringify(mediaData));
+  }
+});
+2. Stored Data Structure
+The data is stored in localStorage and contains:
+
+Movie/Show details (title, poster, etc.)
+Watch progress (time watched, duration)
+Last watched episode for TV shows
+Episode-specific progress for shows
+Example Data Structure
+Copy
+[
+  {
+    "id": 12,
+    "type": "movie",
+    "title": "Finding Nemo",
+    "poster_path": "/eHuGQ10FUzK1mdOY69wF5pGgEf5.jpg",
+    "backdrop_path": "/eCynaAOgYYiw5yN5lBwz3IxqvaW.jpg",
+    "progress": {
+      "watched": 64.713891,
+      "duration": 6053.865999999997
+    },
+    "last_updated": 1732173179272
+  },
+  {
+    "id": 52814,
+    "type": "tv",
+    "title": "Halo",
+    "poster_path": "/4UmNhZCEu8Vt3byMvNxNEPyf8EY.jpg",
+    "backdrop_path": "/zW0v2YT74C6tRafzqqBkfSqLAN0.jpg",
+    "progress": {
+      "watched": 0,
+      "duration": 0
+    },
+    "last_updated": 1735651642940,
+    "number_of_episodes": 17,
+    "number_of_seasons": 2,
+    "last_season_watched": "1",
+    "last_episode_watched": "1",
+    "show_progress": {
+      "s1e1": {
+        "season": "1",
+        "episode": "1",
+        "progress": {
+          "watched": 3.793523,
+          "duration": 3536.793000000001
+        },
+        "last_updated": 1735651642940
+      }
+    }
+  }
+]
+Player Event Tracking New
+Listen to player events to track user interactions and video playback states. Events are sent via postMessage to the parent window.
+
+Available Events
+play - Triggered when video starts playing
+pause - Triggered when video is paused
+seeked - Triggered when user seeks to a different timestamp
+ended - Triggered when video playback ends
+timeupdate - Triggered periodically during playback
+Event Data Structure
+Event Object
+Copy
+{
+  type: "PLAYER_EVENT",
+  data: {
+    event: "play" | "pause" | "seeked" | "ended" | "timeupdate",
+    currentTime: number,
+    duration: number,
+    tmdbId: number,
+    mediaType: "movie" | "tv",
+    season?: number,
+    episode?: number
+  }
+}
+Implementation Example
+Copy
+window.addEventListener('message', (event) => {
+  if (event.origin !== 'https://vidrock.net') return;
+
+  if (event.data?.type === 'PLAYER_EVENT') {
+    const { event: eventType, currentTime, duration } = event.data.data;
+    // Handle the event
+  }
+});
+
+--------------------------------------------------
+https://ani.pm/developers
+--------------------------------------------------
+
+ani.pm Player API
+Put the ani.pm player on any site, free, with no signup and no key. We host the video, the subtitles and the bandwidth and keep the player up to date; you get a two-way JavaScript API and an open catalogue API to build around it.
+
+No key · No limits · Any site
+Free, 1 popover every 5 minutes
+
+Start embedding
+TypeScript types
+01
+Overview
+02
+Quick start
+03
+Live demo
+04
+Embed URL
+05
+Switching providers
+06
+JavaScript SDK
+07
+Events and state
+08
+postMessage protocol
+09
+REST API
+10
+Apps and keys
+11
+Security
+12
+Fair use
+13
+No limits
+14
+Errors
+15
+Versioning
+16
+Developer terms
+01
+Overview
+One iframe gives your visitors the same player ani.pm runs: sub and dub, soft and burned-in subtitles, dub captions, skip intro and outro, next episode, the episode browser, scrub previews, caption styling, AirPlay and Cast.
+
+Open to everyone. No key, no account, no list of sites, no limits. Paste the link and it plays.
+We run it. Streams, subtitle tracks and every byte of bandwidth come from ani.pm. Player improvements reach your embeds the moment we ship them.
+Two-way. The SDK drives playback, language, episodes, subtitles, quality and the accent color, and reports every event back to your page. Pages built for other anime embeds keep their progress code: ani.pm sends the same messages.
+A catalogue API. Search, whole series with exact per-episode availability, AniList/MAL id mapping, the newest episodes, this week's schedule and what is trending, all without a key.
+1 popover every 5 minutes. A click inside the player opens one ad in a new tab, at most once every 5 minutes per viewer. You pay nothing and add nothing.
+It follows ani.pm. A title removed from ani.pm stops playing in every embed at once.
+02
+Quick start
+Pick the AniList id of a title (the number in its AniList URL), an episode and a language, and paste:
+
+Plain iframe (no key)
+Copy
+<iframe
+  src="https://ani.pm/embed/ani/154587/1/sub"
+  title="Frieren: Beyond Journey’s End, episode 1"
+  style="width:100%;aspect-ratio:16/9;border:0"
+  allow="autoplay; fullscreen; picture-in-picture; encrypted-media; screen-wake-lock"
+  allowfullscreen></iframe>
+With the SDK (two-way)
+Copy
+<div id="player"></div>
+<script src="https://ani.pm/embed/sdk/v1.js"></script>
+<script>
+  const player = new AniPM.Player('#player', {
+    anime: 154587,      // AniList id, or 'mal-52991'
+    episode: 1,
+    lang: 'sub',        // or 'dub'
+  })
+  player.on('ready', (state) => console.log('Playing', state.title, 'episode', state.episode))
+  player.on('ended', () => console.log('Finished'))
+</script>
+Markup only (auto-mounted)
+Copy
+<div data-anipm-player data-anime="154587" data-episode="1" data-lang="dub"></div>
+<script src="https://ani.pm/embed/sdk/v1.js" defer></script>
+Know only the MyAnimeList id? Use /embed/mal/52991/1/sub. Use the REST API to search, map your own ids and see which episodes and languages exist. Want usage numbers or your own defaults? An app is free and optional.
+
+03
+Live demo
+An open embed like any other site's, driven by the buttons below through the SDK.
+
+
+play()
+pause()
+seekBy(30)
+setLanguage()
+next()
+setAccent()
+toggleTheater()
+setAmbient()
+10:33:32 AM  pause  episode 1 · sub · 34s
+10:33:27 AM  qualitychange  {"quality":{"height":1080,"auto":false},"qualities":[{"height":1080,"bitrate":46
+10:33:27 AM  playing  episode 1 · sub · 30s
+10:33:27 AM  play  episode 1 · sub · 30s
+10:33:27 AM  seeked  episode 1 · sub · 30s
+10:33:27 AM  play  episode 1 · sub · 30s
+10:33:27 AM  ready  episode 1 · sub · 30s
+10:33:27 AM  volumechange  episode 1 · sub · 30s
+10:33:27 AM  seeking  episode 1 · sub · 30s
+10:32:56 AM  qualitychange  {"quality":{"height":1080,"auto":false},"qualities":[{"height":1080,"bitrate":46
+10:32:56 AM  playing  episode 1 · sub · 0s
+10:32:56 AM  ready  episode 1 · sub · 0s
+04
+Embed URL
+Formats
+Copy
+https://ani.pm/embed/ani/{anilistId}/{episode}/{sub|dub|vostfr}
+https://ani.pm/embed/mal/{malId}/{episode}/{sub|dub|vostfr}
+https://ani.pm/embed/v1/{anilistId}/{episode}?key=pk_live_…   (an app's embed)
+Parameter	Values	Default	What it does
+key	pk_live_…	none	Optional: plays the embed under your app (usage numbers, your defaults, your site lock).
+lang	sub / dub / vostfr	sub	Audio language, when the path does not give it: Japanese (sub) or English (dub); a missing dub falls back to sub. There is no French dub: vostfr (or vf) plays the Japanese audio with French subtitles where the episode has them.
+hardsub	1 / 0	0	Prefer the burned-in subtitle version where the episode has one.
+start	seconds	0	Start position (also t=).
+autoplay	1 / 0	1	Start playing as soon as the player loads. 0: the title poster waits for the viewer to press Play. Browsers that block sound start it muted: combine with muted=1 to always start silent.
+muted	1 / 0	0	Start muted.
+poster	1 / 0	1	With autoplay=0, show the title poster until the viewer presses Play. 0: start at once anyway.
+autonext	1 / 0	1	Play the next episode when one ends.
+autoskip	1 / 0	0	Skip intros and outros automatically.
+theater	1 / 0	0	Start in theater mode (the player’s big-canvas presentation: pause menu, ambient glow).
+episodes	1 / 0	1	Show the episode browser inside the player.
+color	hex, no #	ani.pm lavender	Accent color of the play button and the player, e.g. ff7aa8.
+subtitles	off, a language or a track label	the viewer’s choice	Initial subtitles: a language code or name (fr, es, de, pt, English …) or a track label; off turns them off. An episode with no track in that language shows its English ones.
+adult	1 / 0	1	18+ titles play like every other title; 0 hides them.
+api	1 / 0	1	Set 0 to turn the postMessage API off (a plain player).
+Always frame it. Opening an embed URL in a tab sends the visitor to the title on ani.pm.
+Give the iframe its permissions: allow="autoplay; fullscreen; picture-in-picture; encrypted-media; screen-wake-lock" and allowfullscreen. The SDK sets them for you.
+Size: 16:9, at least 320×180. The player adapts from phones to TVs.
+Settings stay with the viewer. Auto-next, auto-skip, theater, volume, subtitles, caption style, ambient glow and shortcuts are remembered on your site. A switch your link names (autonext, autoskip, theater) wins for that load without overwriting the viewer’s choice.
+Problems show inside the frame (an episode that is not available, an 18+ title on a link with adult=0) with a link to the title on ani.pm.
+05
+Switching providers
+If your site already embeds anime by AniList or MyAnimeList id, the ani.pm links have the same shape: change the host and path prefix and keep your ids. The player also posts the progress messages other anime embeds send, so auto-next and watch-time code keeps working unchanged:
+
+Message	When
+{ channel: 'megacloud', event: 'time', time, duration, percent }	Once a second while playing.
+{ channel: 'megacloud', event: 'complete', time, duration, percent: 100 }	The episode finished.
+{ type: 'watching-log', currentTime, duration }	Every 10 seconds while playing.
+Switching an existing page
+Copy
+<!-- before -->
+<iframe src="https://<other-provider>/stream/ani/154587/1/sub" allowfullscreen></iframe>
+<!-- after: the same path shape on ani.pm -->
+<iframe src="https://ani.pm/embed/ani/154587/1/sub" allowfullscreen
+        allow="autoplay; fullscreen; picture-in-picture; encrypted-media; screen-wake-lock"></iframe>
+
+<script>
+  // Your existing listener keeps working: ani.pm also sends these messages.
+  window.addEventListener('message', (event) => {
+    if (event.origin !== 'https://ani.pm') return
+    const data = event.data
+    if (data.event === 'time') saveProgress(data.time, data.duration, data.percent)
+    if (data.event === 'complete') playNext()
+    if (data.type === 'watching-log') logWatchTime(data.currentTime, data.duration)
+  })
+</script>
+What you gain: two-way control (play, seek, language, episode, subtitles, quality from your own UI), hard subs, dub captions, the episode browser, skip intro, scrub previews, caption styling, and a catalogue API that tells you exactly which episode exists in which language.
+
+06
+JavaScript SDK
+https://ani.pm/embed/sdk/v1.js is dependency-free (about 5 KB compressed), defines window.AniPM and also works with CommonJS. Every method returns a Promise that resolves with the player's state, or rejects with an AniPMError whose code says why. Calls made before the embed has loaded are queued.
+
+Playback starts on its own. The player starts as soon as it loads; a browser that blocks sound starts it muted, and the viewer unmutes with one tap. With autoplay=0 the Play screen waits for the viewer: until then loadEpisode(), next(), previous(), seek(), setLanguage() and setHardsub() choose what it will play, start() or play() starts it, and state.awaitingPress is true.
+
+Your own controls
+Copy
+const player = new AniPM.Player('#player', { anime: 21, episode: 1000 })
+
+// Your own buttons
+document.querySelector('#skip-10').onclick = () => player.seekBy(10)
+document.querySelector('#dub').onclick = () => player.setLanguage('dub')
+document.querySelector('#next').onclick = () => player.next()
+document.querySelector('#full').onclick = () => player.requestFullscreen() // must run in your click handler
+
+// Resume where the viewer left off, and remember where they are
+const saved = Number(localStorage.getItem('op-1000') || 0)
+if (saved > 0) player.seek(saved)
+player.on('timeupdate', ({ currentTime }) => localStorage.setItem('op-1000', String(Math.floor(currentTime))))
+
+// Everything is a promise that rejects with a code
+try {
+  await player.setQuality(1080)
+} catch (error) {
+  console.warn(error.code, error.message) // e.g. 'quality-unavailable'
+}
+Method	Does
+new AniPM.Player(target, options)	Mounts the player in an element (or selector). Options are the embed parameters in camelCase (anime, episode, lang, hardsub, start, autoplay, muted, poster, autoNext, autoSkip, theater, episodes, color, subtitles, adult, key), plus title, width, height, aspectRatio, lazy, theaterLayout, rememberSettings, reportPage (default true: your app’s analytics count plays per page, by path only) and on: { event: handler }.
+ready()	Resolves once the embed answers (not when video starts: listen for ready).
+start()	Starts the player as if Play was pressed (an autoplay=0 embed waits for it; the others start on their own).
+play() · pause() · togglePlay()	Playback. play() and togglePlay() also start an autoplay=0 embed.
+seek(seconds) · seekBy(delta)	Jump to a position, or move by a number of seconds.
+setVolume(0…1) · setMuted(bool) · mute() · unmute()	Volume, remembered by the player on your site.
+setPlaybackRate(0.25…4)	Speed.
+setSubtitles(false | 'fr' | 'French' | { label } | { language })	Subtitles off, or a track by language (any code or name: fr, fre, French, Français) or by label.
+setQuality(height)	A rendition by picture height, from state.qualities. The player pins one rendition and never lowers it on its own.
+setLanguage('sub' | 'dub') · setHardsub(bool)	Switch audio or subtitle version; playback continues from the same position.
+loadEpisode(n, { lang, start })	Another episode of the same title, in place.
+next() · previous()	Neighbouring available episodes.
+setAutoNext(bool) · setAutoSkip(bool)	Next-episode and skip-intro behaviour.
+setTheater(bool) · toggleTheater()	Theater mode, as the player’s own theater button does it.
+setAmbient(bool)	The ambient glow around the picture (it shows in theater and fullscreen, where the frame is wider than the picture).
+setAccent('#rrggbb')	Accent color.
+getState() · getEpisodes()	Fresh state; the title’s episodes with availability.
+loadTitle(anime, episode, options)	Another title in the same element (the embed reloads).
+requestFullscreen() · exitFullscreen()	Fullscreen on the iframe. Call from your own click handler: browsers require a gesture on your page.
+on(event, fn) · once() · off()	Events; on returns an unsubscribe function. "*" receives every event.
+destroy()	Removes the player and its listeners.
+AniPM.embedUrl(options)	The iframe URL for the same options, for server-rendered pages.
+AniPM.mountAll(scope?)	Mounts [data-anipm-player] elements added after load.
+Playlists and titles
+Copy
+// One player, many titles
+player.loadTitle(154587, 1)          // reloads the embed with another title
+player.loadEpisode(5, { start: 90 }) // same title, in place, no reload
+const episodes = await player.getEpisodes()
+// [{ number: 1, title, runtimeSeconds, available: { sub, dub, subHard, dubHard } }, …]
+Theater. The player’s theater button (or setTheater) puts it in its big-canvas presentation: the pause menu with the episode list, and the ambient glow wherever the frame is wider than the picture. The SDK then widens the frame to the window’s width, at up to 85% of its height, and marks your element with data-anipm-theater. Lay it out yourself with theaterLayout: false: the attribute and the theaterchange event still come.
+
+Theater with your own layout
+Copy
+const player = new AniPM.Player('#player', { anime: 154587, episode: 1, theaterLayout: false })
+
+// Your layout: e.g. move the player out of the sidebar layout while theater is on
+player.on('theaterchange', ({ theater }) => {
+  document.body.classList.toggle('watch--wide', theater)
+})
+// or in CSS: #player[data-anipm-theater] { … }
+
+// Without the SDK, the same event arrives as a message:
+// { ns: 'anipm.player', v: 1, event: 'theaterchange', data: { theater: true } }
+Settings. What the viewer sets in the player is remembered on your site. The SDK also keeps a copy in your page’s storage (anipm:player-settings:v1), because some browsers clear a framed site’s storage when the tab closes; turn that off with rememberSettings: false.
+
+07
+Events and state
+player.state always holds the last known state; getState() asks the player for a fresh one. Most events carry the full state.
+
+Field	Type	Meaning
+status	'idle' | 'loading' | 'ready' | 'error'	Poster shown, starting, playing a stream, or stopped by an error.
+awaitingPress	boolean	True while an autoplay=0 embed waits on its title poster for the viewer to press Play.
+anilistId · malId · title	number · number · string	The title.
+episode · lang · hardsub	number · 'sub' | 'dub' · boolean	What is playing.
+currentTime · duration	seconds	Clock.
+paused · ended · buffering	boolean	Playback state.
+volume · muted · playbackRate	number · boolean · number	Audio and speed.
+quality · qualities	{ height } · [{ height, bitrate }]	Rendition playing and those available.
+subtitles · subtitleTracks	{ enabled, label } · [{ label, language, showing }]	Subtitle choice and the tracks this episode has.
+availability	{ sub, dub, subHard, dubHard }	Versions this episode exists in.
+hasPrevious · hasNext	boolean	Neighbouring episodes.
+fullscreen · autoNext · autoSkip · theater	boolean	Presentation and behaviour.
+ambient	boolean | null	The ambient glow on this device (null until the player has said).
+Event	When
+loaded	The embed document is up (poster showing).
+ready	The episode is playing (again after every episode change).
+play · pause · playing · waiting	Playback starts, pauses, resumes after buffering, or buffers.
+seeking · seeked	A jump starts and lands.
+timeupdate	Once a second while playing: { currentTime, duration, paused }.
+durationchange · ratechange · volumechange	Media changes.
+ended	The episode finished (the next one follows when autoNext is on).
+episodechange · languagechange	Another episode, or sub/dub or hard/soft changed.
+episodes	The title's episode list arrived.
+qualitychange · subtitlechange	Rendition or subtitle track changed, with the lists.
+fullscreenchange	The player entered or left fullscreen.
+autonextchange · autoskipchange	The viewer flipped a switch inside the player.
+theaterchange · ambientchange	{ theater } or { ambient }: theater mode or the ambient glow turned on or off.
+settings	The viewer’s saved settings changed ({ settings }); the SDK keeps this copy for you.
+autoplayblocked	The browser refused to start playback without a click.
+error	{ code, message }: see Errors.
+08
+postMessage protocol
+The SDK is a thin client over messages you can send yourself. Messages are objects { ns: 'anipm.player', v: 1, … }, exchanged between the page that frames the embed and the embed itself; check event.origin (https://ani.pm) and event.source on your side.
+
+Direction	Shape
+page → embed	{ ns, v: 1, id?: number, cmd: string, args?: object }
+embed → page (reply)	{ ns, v: 1, id, ok: true, result }
+embed → page (failure)	{ ns, v: 1, id, ok: false, error: { code, message } }
+embed → page (event)	{ ns, v: 1, event: string, data }
+Commands: hello (send first; the reply carries the state), getState, getEpisodes, start, play, pause, togglePlay, seek { time }, setVolume { volume, muted? }, setMuted { muted }, setPlaybackRate { rate }, setSubtitles { enabled, label?, language? }, setQuality { height }, setLanguage { lang }, setHardsub { on }, loadEpisode { episode, lang?, start? }, next, previous, setAutoNext { on }, setAutoSkip { on }, setTheater { on }, toggleTheater, setAmbient { on }, setAccent { color }. hello may carry { settings }: a copy of the settings event’s data, which the embed takes back when its own storage has lost it. At most 40 commands a second.
+
+Talking to the embed without the SDK
+Copy
+const frame = document.querySelector('iframe')
+const ORIGIN = 'https://ani.pm'
+let id = 0
+const pending = new Map()
+
+function send(cmd, args = {}) {
+  return new Promise((resolve, reject) => {
+    const n = ++id
+    pending.set(n, { resolve, reject })
+    frame.contentWindow.postMessage({ ns: 'anipm.player', v: 1, id: n, cmd, args }, ORIGIN)
+  })
+}
+
+window.addEventListener('message', (event) => {
+  if (event.source !== frame.contentWindow || event.origin !== ORIGIN) return
+  const m = event.data
+  if (!m || m.ns !== 'anipm.player' || m.v !== 1) return
+  if (m.id && pending.has(m.id)) {                  // a reply
+    const p = pending.get(m.id); pending.delete(m.id)
+    m.ok ? p.resolve(m.result) : p.reject(Object.assign(new Error(m.error.message), { code: m.error.code }))
+  } else if (m.event) {                             // an event
+    console.log(m.event, m.data)
+  }
+})
+
+frame.addEventListener('load', () => send('hello').then((r) => console.log('connected', r.state)))
+09
+REST API
+A read-only JSON API over the same catalogue ani.pm serves, at https://ani.pm/api/partner/v1. No key needed, and every site may call it from the browser (CORS). Every response carries X-AniPM-API-Version; errors are { "error": { "code", "message" } } with the HTTP status. 18+ titles are included and marked "adult": true; add adult=0 to leave them out.
+
+From anywhere
+Copy
+curl "https://ani.pm/api/partner/v1/titles?q=frieren&limit=5"
+curl "https://ani.pm/api/partner/v1/series/154587"
+curl "https://ani.pm/api/partner/v1/lookup?mal=52991,21"
+From a page
+Copy
+// No key, from any page
+const res = await fetch('https://ani.pm/api/partner/v1/series/154587')
+const { data } = await res.json()
+const dubbed = data.episodeList.filter((episode) => episode.available.dub)
+document.querySelector('iframe').src = dubbed[0].embed.dub
+GET
+/titles?q={query}&page={1-20}&limit={1-50}
+no key
+Search by title (romaji, English, native and alternative titles), 2 to 120 characters. Returns { data: Title[], page, limit, total, hasMore }.
+
+GET
+/titles/{id}
+no key
+One title by AniList id or mal-{id}.
+
+Response
+Copy
+{
+  "data": {
+    "anilistId": 154587,
+    "malId": 52991,
+    "title": "Frieren: Beyond Journey’s End",
+    "nativeTitle": "葬送のフリーレン",
+    "format": "TV",
+    "status": "Finished",
+    "year": 2023,
+    "season": "fall",
+    "score": 9.36,
+    "rating": "PG-13",
+    "durationMinutes": 24,
+    "episodes": { "total": 28, "sub": 28, "dub": 28 },
+    "genres": ["Adventure", "Drama", "Fantasy"],
+    "studios": ["MADHOUSE"],
+    "adult": false,
+    "synopsis": "The adventure is over but life goes on…",
+    "poster": "https://ani.pm/api/anime/cover?anilistId=154587&malId=52991",
+    "banner": null,
+    "url": "https://ani.pm/ani/154587",
+    "embed": "https://ani.pm/embed/ani/154587/1/sub"
+  }
+}
+GET
+/series/{id}
+no key
+The title and every available episode in one call, each with exactly which versions exist and ready embed links.
+
+Response
+Copy
+{
+  "data": {
+    "anilistId": 154587,
+    "title": "Frieren: Beyond Journey’s End",
+    "…": "every title field above",
+    "episodeList": [
+      {
+        "number": 1,
+        "title": null,
+        "runtimeSeconds": 1560,
+        "aired": null,
+        "thumbnail": null,
+        "available": { "sub": true, "dub": true, "subHard": false, "dubHard": false },
+        "embed": {
+          "sub": "https://ani.pm/embed/ani/154587/1/sub",
+          "dub": "https://ani.pm/embed/ani/154587/1/dub"
+        }
+      }
+    ]
+  }
+}
+GET
+/titles/{id}/episodes
+no key
+Just the episodes (the same rows as episodeList above), with total.
+
+GET
+/lookup?anilist={ids}&mal={ids}
+no key
+Up to 50 comma-separated ids in one call: whether ani.pm has each title, its AniList id, episode counts and embed link. Use it to map your own database.
+
+GET
+/recent?page={1-25}&limit={1-100}
+no key
+Episodes most recently added to ani.pm, newest first: { anilistId, title, poster, episode, episodeTitle, sub, dub, addedAt, runtimeSeconds, embed }. /latest is the same list.
+
+GET
+/schedule
+no key
+This week's releases, sub and dub, a day back and a week ahead, and whether each is on ani.pm yet.
+
+Response
+Copy
+{
+  "data": [
+    {
+      "anilistId": 185646,
+      "title": "Koupen-chan",
+      "episode": 70,
+      "kind": "sub",
+      "airingAt": "2026-09-28T06:25:00.000Z",
+      "final": false,
+      "delayed": false,
+      "onAniPm": false,
+      "adult": false,
+      "embed": null
+    }
+  ]
+}
+GET
+/top?range={today|week|month|all}&genre={Genre}&format={TV|MOVIE|OVA|ONA|SPECIAL}&limit={1-100}
+no key
+What ani.pm viewers watch most, with views.
+
+GET
+/me · /usage?days={1-90}
+secret key
+Your app and today's usage; daily loads (embeds shown), plays, apiCalls and refusals. limits in /me is all null: there are none.
+
+GET
+/analytics?days={7|30|90}
+secret key
+The daily summary (API 1.2.0): totals for the period and the one before it, one row per UTC day, plays per UTC hour, startup and rebuffering, the top titles, episodes, sites, countries, devices, browsers, systems and audio (sub, dub, burned-in), the errors viewers met, your REST endpoints, and who is watching right now. The analytics page's full report is /analytics/report below.
+
+Analytics for your server
+Copy
+curl -H "X-API-Key: sk_live_…" "https://ani.pm/api/partner/v1/analytics?days=30"
+
+{ "data": {
+    "range": { "days": 30, "from": "2026-08-29", "to": "2026-09-27", "previousFrom": "2026-07-30", "previousTo": "2026-08-28" },
+    "live": { "watching": 42, "titles": [{ "anilistId": 154587, "title": "Frieren", "viewers": 9 }] },
+    "totals": { "plays": 18340, "avgDailyViewers": 512.4, "watchSeconds": 9920311, "avgWatchSeconds": 541,
+                "completionRate": 0.47, "playRate": 0.62, "loads": 29580, "apiCalls": 88120, "refusals": 12, … },
+    "previous": { …the same fields for the 30 days before… },
+    "daily": [{ "day": "2026-08-29", "loads": 990, "plays": 611, "viewers": 488, "watchSeconds": 330120, "completes": 280 }, …],
+    "hours": [410, 388, …24 numbers, plays per UTC hour],
+    "quality": { "startupAvgMs": 1380, "startupP50": "1-2s", "startupP90": "2-3s", "rebufferRatio": 0.004, "stallsPerHour": 0.6 },
+    "top": { "titles": […], "episodes": […], "sites": […], "countries": […], "devices": […], "browsers": […],
+             "systems": […], "audio": […], "errors": […], "endpoints": […] } } }
+GET
+/analytics/report?from={YYYY-MM-DD}&to={YYYY-MM-DD}&tz={minutes east of UTC}&compare={0|1}&f_{dimension}={value}
+secret key
+The analytics page's own report (API 1.3.0), for any span up to 400 days in your own time zone: totals against the span before, a series by hour, day or week, retention, watch-time, startup and stall distributions, plays by weekday and hour, breakdowns by title, episode, site, page, country, language, locale, time zone, device, browser and system (with versions), player width, pixel ratio, network, input, audio, subtitles, resolution, speed, how plays started and ended, resume, fullscreen, theater, sound, player engine and embed version, the problems, your REST calls (status, key, latency) and the newest plays. Every dimension can filter: f_country=US, f_title=154587, f_subs=off… A report reads at most 250,000 plays, newest first (truncated, rowLimit); filters narrow what it reads, so a filtered report stays exact over long ranges.
+
+The full report
+Copy
+curl -H "X-API-Key: sk_live_…" \
+  "https://ani.pm/api/partner/v1/analytics/report?from=2026-09-01&to=2026-09-27&tz=180&f_country=US"
+
+{ "data": {
+    "range": { "from": "2026-09-01", "to": "2026-09-27", "tzOffset": 180, "granularity": "day", ... },
+    "totals": { "plays": 14349, "viewerDays": 14104, "watchSeconds": 10883120, "completionRate": 0.471,
+                "avgPercent": 58.9, "playRate": 0.646, "startupAvgMs": 1470, "rebufferRatio": 0.0014, ... },
+    "previous": { ... },                      // the same span just before
+    "series": [{ "t": 1756674000000, "plays": 512, "viewers": 505, "watchSeconds": 380211, ... }],
+    "retention": [{ "percent": 50, "plays": 8466, "share": 0.59 }, ...],
+    "startup": { "p50Ms": 1210, "p90Ms": 2480, ... }, "heatmap": [[...24 hours] x 7 days],
+    "breakdowns": { "title": [...], "episode": [...], "site": [...], "page": [...], "country": [...],
+                    "language": [...], "device": [...], "browserVersion": [...], "subs": [...], ... },
+    "problems": [...], "api": { "calls": 42711, "p95Ms": 500, "endpoints": [...], ... },
+    "recent": [ /* the newest 200 plays, every field */ ]
+} }
+GET
+/analytics/plays?from=&to=&tz=&f_{dimension}=&limit={1-10000}&format={json|csv}
+secret key
+Every play, newest first, one object (or CSV row) each: when, the title and episode, audio, site and page, country, language and time zone, device, browser and system, player size, network, how it started and ended, watch time, the furthest point, startup, stalls, seeks, pauses, resolution, subtitles, speed, fullscreen, theater, sound, errors and an anonymous daily viewer tag. more: true means the limit cut it short.
+
+GET
+/analytics/realtime
+secret key
+Live playback exactly as it is: every open player (playing, paused or buffering) with its position (and the time it was reported, so you can move a playing one on at its rate), what it plays and with which settings, where it runs; plays running and started each of the last 30 minutes, plays each of the last 48 hours, and the newest plays.
+
+Live now
+Copy
+curl -H "X-API-Key: sk_live_…" "https://ani.pm/api/partner/v1/analytics/realtime"
+
+{ "data": {
+    "watching": 36,
+    "sessions": [{ "title": "Frieren: Beyond Journey’s End", "episode": 8, "state": "playing",
+                   "position": 657.4, "positionAt": 1759000123456, "durationSeconds": 1440, "rate": 1,
+                   "quality": 1080, "subtitles": "en", "audio": "sub", "fullscreen": true, "muted": false,
+                   "country": "PH", "site": "example.com", "page": "/watch/frieren", "device": "desktop", ... }],
+    "minutes": [{ "t": 1759000080000, "started": 2, "active": 31 }, ...],
+    "hours": [...], "recent": [...]
+} }
+10
+Apps and keys
+Everything above works without one. An app (free, at Developers › Your apps, signed in) adds:
+
+A full analytics page for each app (Analytics in the dashboard, and /analytics/report,/analytics/plays and /analytics/realtime for your server): every play and what happened in it; live playback as it is (each open player, its position, playing, paused or buffering, and its settings); plays, viewers, watch time, completion and the furthest point reached against the period before; retention; when people watch; titles and episodes; countries, languages and time zones; sites and pages; devices, browsers and systems with versions; startup, rebuffering and stalls; audio, subtitles, resolution, speed, fullscreen and theater; how plays start and end; problems; your REST calls with status and latency. Any range up to 400 days in your own time zone, every row a filter, exportable as CSV or JSON. Your apps are listed side by side there too.
+Your defaults: audio language, next episode, skip intros, accent color, 18+ on or off, for every embed that carries your key (/embed/v1/{anilistId}/{episode}?key=pk_live_…).
+A site lock, if you want one: list your sites and your key's embeds stay blank anywhere else. An app that lists no sites works everywhere.
+A secret key for your server (X-API-Key: sk_live_…): your usage and analytics over the REST API. It is shown once; never put it in front-end code (browsers that send it are refused).
+What analytics collect. Plays, embeds shown and API calls are counted where ani.pm serves them; everything that happens in a play (watch time, the furthest point, startup, stalls, seeks, pauses, resolution, subtitles, speed, fullscreen, sound, and where it is while it plays) comes from the player. No address, user agent or full page address is stored: a viewer is an anonymous tag from a hash whose daily key is discarded after two days (so it cannot be tied to anyone, even by ani.pm), countries come from each viewer’s connection, sites are the host names of the pages the player is on, pages are the paths the SDK reports (never a query string; turn it off with reportPage: false), and devices, browsers and systems are classes and major versions. Numbers arrive within about 15 seconds; live players report every 15 seconds. Plays are kept for 400 days, and an app's analytics are deleted with the app.
+
+11
+Security
+Every stream is private to its viewer. Playback runs on short-lived sessions signed for one episode, inside ani.pm’s frames; your page never sees a media URL, and there is nothing to hotlink.
+Framing is signed. The player frame accepts the page around it only as ani.pm signs it for that one session: any site for an open embed, only your sites for a locked app.
+Only a frame plays. An embed link opened in a tab goes to the title on ani.pm.
+No viewer data crosses between your page and ani.pm. The embed reads no ani.pm account and sends your page only the player events listed here; the player remembers its own settings (volume, subtitles) per site.
+Your page’s CSP: allow frame-src https://ani.pm, and script-src https://ani.pm if you use the SDK.
+Do not sandbox the iframe. The player needs scripts, its own origin, popups and presentation; a sandbox without them stops it, and the embed says so.
+12
+Fair use
+The player opens at most 1 popover every 5 minutes. Show it as ani.pm serves it:
+
+Do not cover, shrink below 320×180, hide or intercept clicks on the player.
+Do not frame the player inside ad-stacking or click-generating pages.
+Sites and apps that break these rules lose the player without notice.
+
+13
+No limits
+There are none. No key, no signup, no quotas and no rate limits: plays per viewer, per site and per day, REST requests with or without a key, and SDK commands are all unlimited, for open embeds and for apps alike.
+
+What stays is abuse protection, not a quota. ani.pm can switch off an app or a site that misuses the player (see Developer terms), and its network edge turns away floods far beyond anything a page or a server sends.
+Cache what you can. REST answers carry Cache-Control; honouring it makes your pages faster, it is not required.
+14
+Errors
+REST error
+Copy
+HTTP/1.1 404
+{ "error": { "code": "title-not-found", "message": "No available title has that id." } }
+Code	Where	Meaning
+invalid-key	REST, embed	A key that is not an existing app’s. Leave it out for open use.
+origin-not-allowed	REST	A publishable key used on a site its app does not list.
+secret-key-in-browser	REST	A secret key sent by a browser. Rotate it.
+secret-key-required	REST	This endpoint needs the secret key.
+app-suspended	REST, player	Staff suspended the app.
+title-not-found · episode-not-found	REST, player	Not available on ani.pm (never added, or removed).
+adult-not-enabled	player	An 18+ title on a link with adult=0 (or on an app with 18+ off).
+source-absent	player	This episode does not exist in the requested language; the player falls back to sub by itself when it can.
+media-unavailable	player	The stream could not load after a retry.
+rate-limited	player	The player was busy for a moment; Try again works.
+sandboxed	player	The iframe is sandboxed without allow-same-origin.
+invalid-argument · unknown-command	SDK	A command with bad arguments, or no such command.
+quality-unavailable · auto-quality-unavailable	SDK	No rendition of that height; there is no automatic quality.
+no-next-episode · no-previous-episode	SDK	At the end or the start of the list.
+timeout · destroyed · reloaded	SDK	No answer in 15 seconds, the player was destroyed, or another title was loaded.
+15
+Versioning
+v1 is stable. The embed URLs, /embed/sdk/v1.js, the message protocol and /api/partner/v1 only gain fields, options, commands and events. Anything that would break an integration ships as v2 beside v1.
+The player itself updates continuously. Every improvement ani.pm makes to its player reaches your embeds on their next load.
+2026-10-02 · embed 1.6.0, SDK 1.4.1 The screen stays on while the video plays: add screen-wake-lock to your iframe's allow (the SDK sets it). Without it, some phones dim and lock during an episode when the viewer does not touch the screen.
+2026-10-01 · 1 popover every 5 minutes A click inside the player opens one ad in a new tab, at most once every 5 minutes per viewer; that click does not control the player.
+2026-09-28 · embed 1.5.0 The player starts as soon as the embed loads (autoplay defaults to 1; autoplay=0 keeps the Play screen) and carries no ads. click-required is gone.
+2026-09-27 · French subtitles /vostfr and /vf (or lang=vostfr) play the Japanese audio with French subtitles where the episode has them; there is no French dub. subtitles= and setSubtitles() take a language code or name (fr, es, French) as well as a track label.
+2026-09-27 · embed 1.4.0 Playback starts with the viewer’s first press inside the player: autoplay and API starts wait for it (state.awaitingPress, click-required); the player accepts partner sites only inside the ani.pm embed.
+2026-09-27 · API 1.3.0, SDK 1.4.0 The analytics page: every play, live playback as it is, retention, audience, sites and pages, technology, playback quality, player settings, problems and the API, any range, filters, exports; GET /analytics/report, /analytics/plays, /analytics/realtime. The SDK reports the page's path to your analytics (reportPage).
+2026-09-27 · API 1.2.0 No limits anywhere: no daily play ceiling, no per-minute REST ceilings, no command ceiling. Advanced analytics for apps: the dashboard’s Analytics and GET /analytics.
+2026-09-27 · 1.3.0 Theater (theater, setTheater, theaterchange, the SDK’s theater layout) and the ambient glow (setAmbient, ambientchange); the viewer’s settings are remembered on your site (settings, rememberSettings).
+2026-09-27 · 1.2.0 18+ titles play by default in embeds and appear in the REST API; adult=0 hides them.
+2026-09-27 · 1.1.0 Open to everyone: no key, /embed/ani|mal/{id}/{episode}/{lang}, the progress messages other anime embeds send, /series, /schedule, /top, /recent, adult.
+2026-09-27 · 1.0.0 First release: embed, SDK, postMessage protocol, REST API, developer dashboard.
+16
+Developer terms
+Embedding the player means embedding it unmodified; not scraping, re-hosting or re-streaming what it plays; not presenting ani.pm content as your own; and keeping any secret key secret. ani.pm may withdraw the player from sites or apps that misuse it, and remove titles from embeds at any time. The site’s Terms apply to you and your visitors.
+
+That is all there is to it: paste the link and it plays.
+
+Quick start
+Optional apps
+
+https://ani.pm/embed/sdk/v1.d.ts
+
+// Type definitions for the ani.pm Player SDK v1 · https://ani.pm/developers
+// Usage with a bundler: declare the global, e.g. `/// <reference path="./anipm-player.d.ts" />`, and load
+// https://ani.pm/embed/sdk/v1.js with a <script> tag (the SDK is also CommonJS-compatible).
+
+export type Language = 'sub' | 'dub'
+export type PlayerStatus = 'idle' | 'loading' | 'ready' | 'error'
+
+export interface PlayerOptions {
+  /** Optional. Without a key the embed is open (any site, no signup). An app's publishable key (pk_live_…) adds usage
+   *  statistics, the app's defaults and, if the app lists sites, a lock to them. */
+  key?: string
+  /** AniList id (154587) or 'mal-<MyAnimeList id>'. */
+  anime: number | string
+  /** Episode number, 1-based. Default 1. */
+  episode?: number
+  lang?: Language
+  /** Prefer the burned-in subtitle version where one exists. */
+  hardsub?: boolean
+  /** Start position in seconds. */
+  start?: number
+  /** Start playing as soon as the player loads. Default true. false: the title poster waits for the viewer to press
+   *  Play. Browsers that block sound start it muted (combine with muted to always start silent). */
+  autoplay?: boolean
+  muted?: boolean
+  /** With autoplay false, show the title poster until the viewer presses Play. Default true. false: start at once
+   *  anyway. */
+  poster?: boolean
+  /** Play the next episode when one ends. The viewer's own choice is remembered; a value given here wins for this load. */
+  autoNext?: boolean
+  /** Skip intros and outros. Remembered like autoNext. */
+  autoSkip?: boolean
+  /** Start in theater mode. Remembered like autoNext. */
+  theater?: boolean
+  /** Default true: in theater mode the SDK widens the frame to the window's width (up to 85% of its height). Set false to
+   *  lay it out yourself: the element you mounted in carries data-anipm-theater while theater is on. */
+  theaterLayout?: boolean
+  /** Default true: keep a copy of the viewer's player settings in your page's storage, so they survive browsers that
+   *  clear a framed site's storage (Safari). */
+  rememberSettings?: boolean
+  /** Default true: tell your app's analytics which page of your site the player is on (the path only, never a query
+   *  string or fragment). Set false to keep pages out of your analytics. */
+  reportPage?: boolean
+  /** Show the in-player episode browser. Default true. */
+  episodes?: boolean
+  /** Accent color, #rrggbb. */
+  color?: string
+  /** 'off', or a subtitle label to select (e.g. 'English'). */
+  subtitles?: string
+  /** Accessible iframe title. */
+  title?: string
+  width?: string
+  height?: string | number
+  /** CSS aspect-ratio when no height is given. Default '16 / 9'. */
+  aspectRatio?: string
+  lazy?: boolean
+  /** Set false to disable the postMessage API (plain player). */
+  api?: boolean
+  /** 18+ titles play by default; false hides them in an open embed (an app decides this in its settings). */
+  adult?: boolean
+  on?: Partial<{ [K in PlayerEventName]: (data: PlayerEventMap[K], player: Player) => void }>
+}
+
+export interface Quality { height: number; bitrate: number | null }
+export interface SubtitleTrack { label: string; language: string; showing: boolean }
+export interface Availability { sub: boolean; dub: boolean; subHard: boolean; dubHard: boolean }
+
+export interface PlayerState {
+  status: PlayerStatus
+  anilistId: number | null
+  malId: number | null
+  title: string
+  episode: number
+  lang: Language
+  hardsub: boolean
+  currentTime: number
+  duration: number
+  paused: boolean
+  ended: boolean
+  buffering: boolean
+  volume: number
+  muted: boolean
+  playbackRate: number
+  fullscreen: boolean
+  autoNext: boolean
+  autoSkip: boolean
+  /** Theater mode: the player's big-canvas presentation (pause menu, ambient glow). */
+  theater: boolean
+  /** The ambient glow on this device; null until the player has said. */
+  ambient: boolean | null
+  quality: { height: number | null; auto: boolean } | null
+  qualities: Quality[]
+  subtitles: { enabled: boolean | null; label: string | null }
+  subtitleTracks: SubtitleTrack[]
+  availability: Availability | null
+  hasPrevious: boolean
+  hasNext: boolean
+  /** True while an autoplay: false player waits on its title poster for the viewer to press Play. */
+  awaitingPress?: boolean
+}
+
+export interface Episode {
+  number: number
+  title: string | null
+  runtimeSeconds: number | null
+  aired: string | null
+  thumbnail: string | null
+  available: Availability
+}
+
+export interface PlayerEventMap {
+  loaded: PlayerState
+  ready: PlayerState
+  play: PlayerState
+  pause: PlayerState
+  playing: PlayerState
+  waiting: PlayerState
+  seeking: PlayerState
+  seeked: PlayerState
+  timeupdate: { currentTime: number; duration: number; paused: boolean }
+  durationchange: PlayerState
+  ended: PlayerState
+  error: { code: string; message: string }
+  episodechange: PlayerState
+  languagechange: PlayerState
+  episodes: { episodes: Episode[] }
+  volumechange: { volume: number; muted: boolean } | PlayerState
+  ratechange: PlayerState
+  qualitychange: { quality: PlayerState['quality']; qualities: Quality[] }
+  subtitlechange: { subtitles: PlayerState['subtitles']; tracks: SubtitleTrack[] }
+  fullscreenchange: { fullscreen: boolean }
+  autonextchange: { autoNext: boolean }
+  autoskipchange: { autoSkip: boolean }
+  autoplayblocked: PlayerState
+  theaterchange: { theater: boolean }
+  ambientchange: { ambient: boolean }
+  /** The viewer's saved settings changed (the SDK keeps this copy for you unless rememberSettings is false). */
+  settings: { settings: unknown }
+}
+export type PlayerEventName = keyof PlayerEventMap
+
+export declare class AniPMError extends Error {
+  readonly code: string
+}
+
+export declare class Player {
+  constructor(target: string | Element, options: PlayerOptions)
+  static readonly version: string
+  readonly iframe: HTMLIFrameElement
+  /** Last known state, updated from events. */
+  readonly state: PlayerState
+  on<K extends PlayerEventName>(event: K, listener: (data: PlayerEventMap[K], player: Player) => void): () => void
+  on(event: '*', listener: (event: PlayerEventName, data: unknown, player: Player) => void): () => void
+  off(event: PlayerEventName | '*', listener: (...args: any[]) => void): this
+  once<K extends PlayerEventName>(event: K, listener: (data: PlayerEventMap[K], player: Player) => void): () => void
+  /** Resolves when the embed answers (not when video plays; see the 'ready' event). */
+  ready(): Promise<PlayerState>
+  /** Starts playback as if Play was pressed (an autoplay: false player waits for this or for the viewer). */
+  start(): Promise<PlayerState>
+  /** Plays; starts the player first if it has not started yet. */
+  play(): Promise<PlayerState>
+  pause(): Promise<PlayerState>
+  togglePlay(): Promise<PlayerState>
+  seek(seconds: number): Promise<PlayerState>
+  seekBy(deltaSeconds: number): Promise<PlayerState>
+  setVolume(volume: number): Promise<PlayerState>
+  setMuted(muted: boolean): Promise<PlayerState>
+  mute(): Promise<PlayerState>
+  unmute(): Promise<PlayerState>
+  setPlaybackRate(rate: number): Promise<PlayerState>
+  setSubtitles(choice: false | 'off' | string | { label?: string; language?: string }): Promise<PlayerState>
+  /** A picture height from state.qualities. There is no automatic quality. */
+  setQuality(height: number): Promise<PlayerState>
+  setLanguage(lang: Language): Promise<PlayerState>
+  setHardsub(on: boolean): Promise<PlayerState>
+  loadEpisode(episode: number, options?: { lang?: Language; start?: number }): Promise<PlayerState>
+  next(): Promise<PlayerState>
+  previous(): Promise<PlayerState>
+  setAutoNext(on: boolean): Promise<PlayerState>
+  setAutoSkip(on: boolean): Promise<PlayerState>
+  setTheater(on: boolean): Promise<PlayerState>
+  toggleTheater(): Promise<PlayerState>
+  /** The ambient glow (shows in theater and fullscreen). Remembered by the player on this device. */
+  setAmbient(on: boolean): Promise<PlayerState>
+  setAccent(color: string): Promise<PlayerState>
+  getState(): Promise<PlayerState>
+  getEpisodes(): Promise<Episode[]>
+  loadTitle(anime: number | string, episode?: number, options?: Partial<PlayerOptions>): Promise<PlayerState>
+  /** Call from your own click handler. */
+  requestFullscreen(): Promise<void>
+  exitFullscreen(): Promise<void>
+  destroy(): void
+}
+
+export declare function embedUrl(options: PlayerOptions): string
+export declare function mountAll(scope?: ParentNode): Player[]
+export declare const version: string
+export declare const events: PlayerEventName[]
+
+declare global {
+  interface Window {
+    AniPM: { Player: typeof Player; embedUrl: typeof embedUrl; mountAll: typeof mountAll; AniPMError: typeof AniPMError; version: string; events: PlayerEventName[] }
+  }
+}

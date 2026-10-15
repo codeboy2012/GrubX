@@ -1,0 +1,1108 @@
+Video Embed API Documentation
+
+Embed movies, TV shows, and anime into your website using simple iframe URLs. Depending on the provider, you can customize the player, track watch progress, control playback programmatically, and build features such as Continue Watching and synchronized watch parties.
+
+Providers
+Provider	Supported content	Advanced features
+VidFast	Movies, TV shows	Player events, playback controls, watch parties
+VidLink	Movies, TV shows, anime	Custom themes, player events, watch progress
+VidCore	Movies, TV shows	Player events, playback controls, watch parties
+VidRock	Movies, TV shows	Customization, watch progress, player events
+Ani.pm	Anime	JavaScript SDK, catalogue API, playback controls, analytics
+1. Quick Start
+Embed a movie
+
+Replace {id} with the movie's IMDb or TMDB identifier, depending on the provider.
+
+HTML
+<iframe
+  src="https://vidfast.vc/movie/533535"
+  title="Movie player"
+  width="100%"
+  height="100%"
+  style="aspect-ratio: 16 / 9; border: 0;"
+  allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+  allowfullscreen
+  loading="lazy"
+></iframe>
+
+Embed a TV episode
+
+TV embed URLs require a show identifier, season number, and episode number.
+
+HTML
+<iframe
+  src="https://vidfast.vc/tv/63174/1/5"
+  title="TV episode player"
+  width="100%"
+  style="aspect-ratio: 16 / 9; border: 0;"
+  allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+  allowfullscreen
+  loading="lazy"
+></iframe>
+
+Make the player responsive
+
+Use a 16:9 aspect ratio to maintain the correct proportions across screen sizes.
+
+HTML
+<div style="width: 100%; aspect-ratio: 16 / 9;">
+  <iframe
+    src="https://vidfast.vc/movie/533535"
+    title="Movie player"
+    style="width: 100%; height: 100%; border: 0;"
+    allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+    allowfullscreen
+  ></iframe>
+</div>
+
+
+Note: Browser autoplay policies may prevent playback with sound until the viewer interacts with the page.
+
+2. VidFast
+
+Website: https://vidfast.vc/
+
+VidFast supports movie and TV embeds, player customization, playback progress events, and programmatic controls through postMessage.
+
+2.1 Movie embeds
+
+Endpoint
+
+https://vidfast.vc/movie/{id}
+
+
+Example:
+
+https://vidfast.vc/movie/tt6263850
+https://vidfast.vc/movie/533535?theme=16A085
+
+
+The {id} parameter accepts an IMDb or TMDB identifier.
+
+2.2 TV show embeds
+
+Endpoint
+
+https://vidfast.vc/tv/{id}/{season}/{episode}
+
+
+Example:
+
+https://vidfast.vc/tv/tt4052886/1/5
+https://vidfast.vc/tv/63174/1/5?nextButton=true&autoNext=true
+
+Parameter	Description
+title	Show or hide the media title.
+poster	Show or hide the poster image.
+autoPlay	Start playback automatically.
+startAt	Start playback at a specified time in seconds.
+theme	Set the accent color using a hexadecimal color without #.
+server	Select the default streaming server by name.
+hideServer	Show or hide the server selector.
+fullscreenButton	Show or hide the fullscreen control.
+chromecast	Show or hide the Chromecast button.
+sub	Set the default subtitle language, such as en, es, or fr.
+nextButton	TV only. Display the next-episode button after 90% of the episode has been watched.
+autoNext	TV only. Automatically play the next episode. Requires nextButton=true.
+
+Boolean options use values such as true and false.
+
+2.3 Custom themes
+https://vidfast.vc/movie/533535?theme=16A085
+
+
+Example colors:
+
+Green: 16A085
+Blue: 2980B9
+Purple: 9B59B6
+2.4 Watch progress and player events
+
+VidFast sends messages to the parent page using window.postMessage.
+
+Supported player events include:
+
+play
+pause
+seeked
+ended
+timeupdate
+playerstatus
+
+Use this listener to receive playback updates:
+
+const VIDFAST_ORIGINS = [
+  "https://vidfast.pro",
+  "https://vidfast.in",
+  "https://vidfast.io",
+  "https://vidfast.me",
+  "https://vidfast.net",
+  "https://vidfast.pm",
+  "https://vidfast.vc",
+  "https://vidfast.bz"
+];
+
+window.addEventListener("message", (event) => {
+  if (!VIDFAST_ORIGINS.includes(event.origin)) return;
+
+  const message = event.data;
+
+  if (message?.type !== "PLAYER_EVENT" || !message.data) {
+    return;
+  }
+
+  const {
+    event: eventType,
+    currentTime,
+    duration,
+    mediaType,
+    tmdbId,
+    season,
+    episode
+  } = message.data;
+
+  console.log("Player event:", eventType);
+  console.log("Position:", currentTime, "/", duration);
+
+  // Save progress or update your application here.
+});
+
+
+The event payload may also include playing, muted, and volume.
+
+Receive media library data
+
+VidFast can send a MEDIA_DATA message containing media details and watch progress.
+
+window.addEventListener("message", (event) => {
+  if (!VIDFAST_ORIGINS.includes(event.origin)) return;
+
+  if (event.data?.type === "MEDIA_DATA") {
+    const mediaData = event.data.data;
+
+    localStorage.setItem(
+      "vidFastProgress",
+      JSON.stringify(mediaData)
+    );
+  }
+});
+
+
+The data may include a media ID, title, poster, backdrop, playback progress, and episode-specific progress for TV shows.
+
+Control playback
+
+Obtain a reference to the iframe before sending commands.
+
+const iframe = document.querySelector("#vidfast-player");
+
+function sendPlayerCommand(command) {
+  iframe.contentWindow.postMessage(
+    command,
+    "https://vidfast.vc"
+  );
+}
+
+// Resume playback
+sendPlayerCommand({ command: "play" });
+
+// Pause playback
+sendPlayerCommand({ command: "pause" });
+
+// Seek to 120 seconds
+sendPlayerCommand({
+  command: "seek",
+  time: 120
+});
+
+// Set volume to 50%
+sendPlayerCommand({
+  command: "volume",
+  level: 0.5
+});
+
+// Mute playback
+sendPlayerCommand({
+  command: "mute",
+  muted: true
+});
+
+// Request the current player status
+sendPlayerCommand({ command: "getStatus" });
+
+
+Use the actual origin of the iframe in the second argument to postMessage. If the iframe is served from another supported VidFast domain, change the target origin accordingly.
+
+The getStatus command returns a PLAYER_EVENT message with the event name playerstatus.
+
+Watch party integration
+
+A watch party can synchronize participants by broadcasting playback actions through your own WebSocket or real-time messaging service.
+
+Recommended flow:
+
+Listen for play, pause, and seeked events.
+Broadcast the action and playback timestamp to other participants.
+Have each participant's client send the corresponding command to its local iframe.
+Periodically reconcile playback positions to account for network latency.
+
+Avoid broadcasting a command back to the same player that originated it. Otherwise, you may create synchronization loops.
+
+3. VidLink
+
+Website: https://vidlink.pro/
+
+VidLink supports movie, TV, and anime embeds, player customization, watch progress, and playback event tracking.
+
+3.1 Movies
+
+Endpoint
+
+https://vidlink.pro/movie/{tmdbId}
+
+
+Example:
+
+HTML
+<iframe
+  src="https://vidlink.pro/movie/786892"
+  title="Movie player"
+  style="width: 100%; aspect-ratio: 16 / 9; border: 0;"
+  allowfullscreen
+></iframe>
+
+3.2 TV shows
+
+Endpoint
+
+https://vidlink.pro/tv/{tmdbId}/{season}/{episode}
+
+
+Example:
+
+HTML
+<iframe
+  src="https://vidlink.pro/tv/94997/1/1"
+  title="TV episode player"
+  style="width: 100%; aspect-ratio: 16 / 9; border: 0;"
+  allowfullscreen
+></iframe>
+
+
+The TV endpoint requires a TMDB ID, season number, and episode number.
+
+3.3 Anime
+
+Endpoint
+
+https://vidlink.pro/anime/{MALid}/{number}/{subOrDub}
+
+
+Example:
+
+https://vidlink.pro/anime/5/1/sub
+https://vidlink.pro/anime/5/1/sub?fallback=true
+
+{MALid} — MyAnimeList identifier.
+{number} — Episode number.
+{subOrDub} — Audio version, such as sub or dub.
+fallback=true — Request fallback behavior if the selected version is unavailable.
+3.4 Customization parameters
+
+Append parameters to the embed URL using ? for the first parameter and & for subsequent parameters.
+
+Parameter	Description
+primaryColor	Primary player color, including sliders and autoplay controls.
+secondaryColor	Secondary color used behind progress sliders.
+iconColor	Color of player icons.
+icons	Icon style: vid or default.
+title	Show or hide the title.
+poster	Show or hide the poster.
+autoplay	Enable or disable automatic playback.
+nextbutton	Enable or disable the TV next-episode button.
+player	Choose the player implementation, such as default or jw.
+startAt	Start at a specified time in seconds.
+sub_file	Direct URL to an external WebVTT (.vtt) subtitle file.
+sub_label	Label for the external subtitle track.
+fallback_url	Redirect URL to use if the stream fails to load.
+
+Hexadecimal color values must omit the # prefix.
+
+Example: customized player
+https://vidlink.pro/tv/94605/2/1?primaryColor=63b8bc&secondaryColor=a2a2a2&iconColor=eefdec&icons=default&player=default&title=true&poster=true&autoplay=false&nextbutton=false
+
+Example: external subtitles
+https://vidlink.pro/movie/786892?sub_file=https%3A%2F%2Fexample.com%2Fsubtitles.vtt&sub_label=English
+
+
+The subtitle URL should point directly to a VTT file. URL-encode values when building URLs programmatically.
+
+VidLink also offers a JW Player option. Some customization options may have limited or no effect when that player is selected.
+
+3.5 Watch progress
+
+VidLink sends MEDIA_DATA messages that can be saved for a Continue Watching feature.
+
+window.addEventListener("message", (event) => {
+  if (event.origin !== "https://vidlink.pro") return;
+
+  if (event.data?.type === "MEDIA_DATA") {
+    localStorage.setItem(
+      "vidLinkProgress",
+      JSON.stringify(event.data.data)
+    );
+  }
+});
+
+
+The stored data may include titles, artwork, watch position, duration, and episode-specific progress.
+
+3.6 Player events
+
+Available events include play, pause, seeked, ended, and timeupdate.
+
+window.addEventListener("message", (event) => {
+  if (event.origin !== "https://vidlink.pro") return;
+
+  if (event.data?.type !== "PLAYER_EVENT") return;
+
+  const {
+    event: eventType,
+    currentTime,
+    duration,
+    mediaType,
+    season,
+    episode
+  } = event.data.data;
+
+  console.log({
+    eventType,
+    currentTime,
+    duration,
+    mediaType,
+    season,
+    episode
+  });
+});
+
+
+The event payload documents the media identifier as mtmdbId; verify the actual field name before relying on it in production.
+
+4. VidCore
+
+Website: https://vidcore.io/
+
+VidCore supports movie and TV embeds, player customization, playback events, and postMessage controls.
+
+Its movie and TV URL formats and most player parameters closely resemble VidFast.
+
+4.1 Endpoints
+
+Movies
+
+https://vidcore.io/movie/{id}
+
+
+TV shows
+
+https://vidcore.io/tv/{id}/{season}/{episode}
+
+
+Examples:
+
+https://vidcore.io/movie/tt6263850
+https://vidcore.io/movie/533535?theme=16A085&autoPlay=true&sub=en
+https://vidcore.io/tv/tt4052886/1/5
+https://vidcore.io/tv/63174/2/1?theme=16A085&autoPlay=true
+
+
+The ID can be an IMDb or TMDB identifier.
+
+4.2 Player parameters
+Parameter	Type	Description
+theme	String	Accent color in hexadecimal format without #.
+title	Boolean	Show or hide the media title.
+poster	Boolean	Show or hide the poster.
+autoPlay	Boolean	Automatically start playback.
+startAt	Number	Initial playback position in seconds.
+sub	String	Default subtitle language, such as en, es, or fr.
+server	String	Preferred server name.
+hideServer	Boolean	Hide the server selector.
+fullscreenButton	Boolean	Show or hide the fullscreen button.
+chromecast	Boolean	Show or hide the Chromecast/AirPlay button.
+nextButton	Boolean	TV only. Display the next-episode button after 90% watched.
+autoNext	Boolean	TV only. Automatically play the next episode; requires nextButton=true.
+Complete embed example
+HTML
+<iframe
+  id="vidcore-player"
+  src="https://vidcore.io/tv/63174/1/5?autoPlay=true&theme=16A085&nextButton=true&autoNext=true"
+  title="TV episode player"
+  style="width: 100%; aspect-ratio: 16 / 9; border: 0;"
+  allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+  allowfullscreen
+></iframe>
+
+4.3 Playback events
+
+The supplied VidCore event documentation describes messages with event names such as timeupdate and ended.
+
+window.addEventListener("message", (event) => {
+  if (event.origin !== "https://vidcore.io") return;
+
+  const message = event.data;
+  if (!message) return;
+
+  if (message.type === "timeupdate") {
+    const { currentTime, duration, percent } = message.data;
+
+    console.log("Progress:", currentTime, duration, percent);
+  }
+
+  if (message.type === "ended") {
+    console.log("Playback finished.");
+  }
+});
+
+
+The documented time-update payload contains:
+
+currentTime — Current position in seconds.
+duration — Total duration in seconds.
+percent — Progress as a decimal from 0 to 1.
+
+VidCore also documents a direct media-data message containing mediaId, mediaType, and, for TV shows, season and episode.
+
+Integration note: The supplied VidCore examples use more than one message schema, including top-level event names and PLAYER_EVENT messages. Confirm which schema the live player emits before implementing production event handling.
+
+4.4 Programmatic controls
+
+VidCore documents the following commands:
+
+Command	Purpose
+play	Resume playback.
+pause	Pause playback.
+seek	Jump to a specified time in seconds.
+volume	Set volume from 0.0 to 1.0.
+mute	Set the mute state.
+getStatus	Request the current player status.
+
+Example:
+
+const iframe = document.querySelector("#vidcore-player");
+
+function controlPlayer(command) {
+  iframe.contentWindow.postMessage(
+    command,
+    "https://vidcore.io"
+  );
+}
+
+controlPlayer({ command: "play" });
+controlPlayer({ command: "seek", time: 120 });
+controlPlayer({ command: "volume", level: 0.5 });
+controlPlayer({ command: "getStatus" });
+
+
+For a watch party, send the same play, pause, and seek actions to each participant's local player, using a separate real-time messaging layer to distribute commands.
+
+5. VidRock
+
+Website: https://vidrock.net/
+
+VidRock supports movie and TV embeds, customization parameters, media progress storage, and playback event tracking.
+
+5.1 Endpoints
+
+Movies
+
+https://vidrock.net/movie/{tmdb_id}
+https://vidrock.net/movie/{imdb_id}
+
+
+TV shows
+
+https://vidrock.net/tv/{tmdb_id}/{season_number}/{episode_number}
+https://vidrock.net/tv/{imdb_id}/{season_number}/{episode_number}
+
+
+Examples:
+
+HTML
+<iframe
+  src="https://vidrock.net/movie/tt4154796"
+  title="Movie player"
+  style="width: 100%; aspect-ratio: 16 / 9; border: 0;"
+  allowfullscreen
+></iframe>
+
+HTML
+<iframe
+  src="https://vidrock.net/tv/tt0903747/1/1"
+  title="TV episode player"
+  style="width: 100%; aspect-ratio: 16 / 9; border: 0;"
+  allowfullscreen
+></iframe>
+
+5.2 URL parameters
+Parameter	Default	Description
+autoplay	false	Automatically start playback.
+autonext	false	Automatically play the next TV episode.
+theme	ffffff	Player accent color in hexadecimal format without #.
+download	true	Show or hide the download button.
+nextbutton	true	Show or hide the next-episode notification for TV shows.
+episodeselector	true	Show or hide the season and episode selector.
+lang	Browser language	Preferred subtitle language using a two-letter language code.
+Example: combine parameters
+https://vidrock.net/tv/1399/1/1?autoplay=true&autonext=true&theme=00ff00&download=false
+
+5.3 List endpoints
+
+VidRock documents JSON lists for movies and TV shows:
+
+https://vidrock.net/list/movie.json
+https://vidrock.net/list/tv.json
+
+
+Use these endpoints to retrieve the corresponding lists, subject to the provider's current response format.
+
+5.4 Continue Watching
+
+VidRock sends MEDIA_DATA messages containing media metadata and watch progress.
+
+window.addEventListener("message", (event) => {
+  if (event.origin !== "https://vidrock.net") return;
+
+  if (event.data?.type === "MEDIA_DATA") {
+    localStorage.setItem(
+      "vidRockProgress",
+      JSON.stringify(event.data.data)
+    );
+  }
+});
+
+
+The data can include movie or show details, posters, backdrops, playback position, duration, and episode-specific progress.
+
+5.5 Playback event tracking
+
+Supported events include:
+
+play
+pause
+seeked
+ended
+timeupdate
+window.addEventListener("message", (event) => {
+  if (event.origin !== "https://vidrock.net") return;
+
+  if (event.data?.type !== "PLAYER_EVENT") return;
+
+  const {
+    event: eventType,
+    currentTime,
+    duration,
+    tmdbId,
+    mediaType,
+    season,
+    episode
+  } = event.data.data;
+
+  console.log({
+    eventType,
+    currentTime,
+    duration,
+    tmdbId,
+    mediaType,
+    season,
+    episode
+  });
+});
+
+6. Ani.pm — Anime Player API
+
+Website and full documentation: https://ani.pm/developers
+
+Ani.pm provides anime embeds, a JavaScript SDK, playback controls, progress events, and a public catalogue API. An API key is not required for standard embeds or public catalogue requests.
+
+6.1 Quick start
+
+Choose an AniList ID, episode number, and language.
+
+HTML
+<iframe
+  src="https://ani.pm/embed/ani/154587/1/sub"
+  title="Anime episode player"
+  style="width: 100%; aspect-ratio: 16 / 9; border: 0;"
+  allow="autoplay; fullscreen; picture-in-picture; encrypted-media; screen-wake-lock"
+  allowfullscreen
+></iframe>
+
+
+The example uses AniList ID 154587, episode 1, and Japanese audio with subtitles.
+
+6.2 Embed URL formats
+
+AniList
+
+https://ani.pm/embed/ani/{anilistId}/{episode}/{lang}
+
+
+MyAnimeList
+
+https://ani.pm/embed/mal/{malId}/{episode}/{lang}
+
+
+Supported language path values:
+
+sub — Japanese audio with subtitles.
+dub — English audio where available.
+vostfr — Japanese audio with French subtitles where available.
+
+MyAnimeList IDs can also be used with the SDK in the format mal-{id}.
+
+6.3 Embed parameters
+Parameter	Values	Description
+key	Publishable app key	Optional. Enables app-specific defaults, usage tracking, and optional site restrictions.
+lang	sub, dub, vostfr	Select audio and subtitle version when not specified in the path.
+hardsub	1, 0	Prefer a burned-in subtitle version when available.
+start	Seconds	Initial playback position. The alias t is also supported.
+autoplay	1, 0	Start playback automatically; defaults to 1.
+muted	1, 0	Start muted.
+poster	1, 0	Display the title poster before playback.
+autonext	1, 0	Automatically play the next episode.
+autoskip	1, 0	Automatically skip intros and outros.
+theater	1, 0	Start in theater mode.
+episodes	1, 0	Show or hide the episode browser.
+color	Hex color	Set the player accent color without #.
+subtitles	Language or track label, off	Choose the initial subtitle track.
+adult	1, 0	Include or hide 18+ titles.
+api	1, 0	Enable or disable the postMessage API.
+
+Example:
+
+https://ani.pm/embed/ani/154587/1/dub?autonext=1&autoskip=1&color=ff7aa8
+
+
+Always embed this URL in an iframe. Opening it directly in a browser tab redirects the visitor to the title on Ani.pm.
+
+6.4 JavaScript SDK
+
+Load the SDK:
+
+HTML
+<div id="player"></div>
+
+<script src="https://ani.pm/embed/sdk/v1.js"></script>
+<script>
+  const player = new AniPM.Player("#player", {
+    anime: 154587,
+    episode: 1,
+    lang: "sub"
+  });
+
+  player.on("ready", (state) => {
+    console.log("Playing:", state.title);
+  });
+
+  player.on("ended", () => {
+    console.log("Episode finished.");
+  });
+</script>
+
+
+The SDK exposes a two-way API for controlling playback and receiving player events. Its methods return promises, and calls made before the embed is ready are queued.
+
+Core methods
+Method	Description
+ready()	Wait for the embed to respond.
+play() / pause()	Start or pause playback.
+togglePlay()	Toggle playback.
+seek(seconds)	Jump to a specific position.
+seekBy(seconds)	Move relative to the current position.
+setVolume(0–1)	Set the volume.
+setMuted(boolean)	Enable or disable mute.
+setPlaybackRate(rate)	Set playback speed from 0.25 to 4.
+setSubtitles(choice)	Select or disable subtitles.
+setQuality(height)	Select a quality by picture height.
+setLanguage('sub' | 'dub')	Switch audio language.
+setHardsub(boolean)	Choose burned-in subtitles where available.
+loadEpisode(number, options)	Load another episode of the same title.
+next() / previous()	Move between available episodes.
+setAutoNext(boolean)	Enable or disable automatic episode progression.
+setAutoSkip(boolean)	Enable or disable automatic intro and outro skipping.
+setTheater(boolean)	Enable or disable theater mode.
+setAccent(color)	Change the accent color.
+getState()	Retrieve the latest player state.
+getEpisodes()	Retrieve the episode list and availability.
+loadTitle(id, episode)	Load another title.
+requestFullscreen()	Request fullscreen mode.
+destroy()	Remove the player and its listeners.
+Custom controls
+const player = new AniPM.Player("#player", {
+  anime: 154587,
+  episode: 1,
+  lang: "sub"
+});
+
+document.querySelector("#play").onclick = () => player.play();
+document.querySelector("#pause").onclick = () => player.pause();
+document.querySelector("#next").onclick = () => player.next();
+document.querySelector("#skip").onclick = () => player.seekBy(30);
+document.querySelector("#dub").onclick = () => player.setLanguage("dub");
+
+
+Use a user interaction to call requestFullscreen(), because browsers generally require fullscreen requests to originate from a user gesture.
+
+6.5 Events and state
+
+Register event listeners using player.on().
+
+player.on("timeupdate", ({ currentTime, duration }) => {
+  localStorage.setItem(
+    "anime-progress",
+    JSON.stringify({ currentTime, duration })
+  );
+});
+
+player.on("episodechange", (state) => {
+  console.log("Episode changed:", state.episode);
+});
+
+player.on("languagechange", (state) => {
+  console.log("Language:", state.lang);
+});
+
+player.on("error", ({ code, message }) => {
+  console.error(code, message);
+});
+
+
+Key events include:
+
+loaded, ready
+play, pause, playing, waiting
+seeking, seeked, timeupdate
+ended, episodechange, languagechange
+volumechange, ratechange, qualitychange
+subtitlechange, fullscreenchange
+theaterchange, ambientchange
+autonextchange, autoskipchange
+autoplayblocked, error
+
+The player state contains the current title, episode, language, playback position, duration, playback state, volume, subtitles, available qualities, episode availability, and presentation settings.
+
+6.6 Direct postMessage API
+
+For applications that do not use the SDK, Ani.pm exposes a versioned message protocol.
+
+Messages sent from the parent page use this structure:
+
+{
+  ns: "anipm.player",
+  v: 1,
+  id: 1,
+  cmd: "seek",
+  args: { time: 120 }
+}
+
+
+A safe listener should validate the message origin and source:
+
+const frame = document.querySelector("#player iframe");
+const ORIGIN = "https://ani.pm";
+
+frame.contentWindow.postMessage(
+  {
+    ns: "anipm.player",
+    v: 1,
+    id: 1,
+    cmd: "seek",
+    args: { time: 120 }
+  },
+  ORIGIN
+);
+
+window.addEventListener("message", (event) => {
+  if (event.origin !== ORIGIN) return;
+  if (event.source !== frame.contentWindow) return;
+
+  const message = event.data;
+
+  if (message?.ns !== "anipm.player" || message.v !== 1) {
+    return;
+  }
+
+  console.log("Ani.pm message:", message);
+});
+
+
+The protocol supports commands for playback, seeking, volume, subtitles, quality, language, episode navigation, theater mode, accent color, and state retrieval. Replies include the request ID and either a result or a structured error.
+
+6.7 Public catalogue API
+
+Base URL:
+
+https://ani.pm/api/partner/v1
+
+
+Public catalogue endpoints do not require an API key.
+
+Endpoint	Purpose
+GET /titles?q={query}	Search anime by title.
+GET /titles/{id}	Retrieve title metadata by AniList ID or mal-{id}.
+GET /series/{id}	Retrieve title metadata and available episodes.
+GET /titles/{id}/episodes	Retrieve episode listings.
+GET /lookup?anilist={ids}&mal={ids}	Map AniList and MyAnimeList identifiers.
+GET /recent	Retrieve recently added episodes.
+GET /latest	Alias for the recent episode list.
+GET /schedule	Retrieve the current release schedule.
+GET /top	Retrieve popular titles.
+Example: search for a title
+const response = await fetch(
+  "https://ani.pm/api/partner/v1/titles?q=frieren&limit=5"
+);
+
+const result = await response.json();
+
+console.log(result.data);
+
+Example: retrieve episode availability
+const response = await fetch(
+  "https://ani.pm/api/partner/v1/series/154587"
+);
+
+const { data } = await response.json();
+
+const dubbedEpisodes = data.episodeList.filter(
+  (episode) => episode.available.dub
+);
+
+console.log(dubbedEpisodes);
+
+
+The series response includes per-episode availability for sub, dub, and burned-in subtitle versions, along with ready-to-use embed URLs.
+
+API responses and errors
+
+Successful responses use a data field. Errors follow this structure:
+
+{
+  "error": {
+    "code": "title-not-found",
+    "message": "No available title has that id."
+  }
+}
+
+
+Honor the API's Cache-Control response headers when caching catalogue data.
+
+6.8 Optional apps and analytics
+
+Ani.pm apps are optional. An app can provide custom player defaults, usage statistics, and an optional site restriction.
+
+Publishable keys use the pk_live_... format and may be used in embed URLs.
+Secret keys use the sk_live_... format and must remain on your server.
+Secret-key endpoints include usage and analytics reports.
+Analytics can include plays, watch time, completion, player quality, errors, audience breakdowns, and real-time playback sessions.
+
+Never expose a secret key in frontend JavaScript or browser requests.
+
+6.9 Security and usage
+Keep the player in an iframe; do not re-host or re-stream its media.
+Validate event.origin and, when possible, event.source before processing messages.
+Do not sandbox the iframe unless you have verified that all required permissions are available.
+Allow https://ani.pm in your Content Security Policy's frame-src; add it to script-src when using the SDK.
+Keep the player at least 320 × 180 pixels and do not cover or intercept its interactions.
+The provider documents one popover per five minutes per viewer.
+Playback and catalogue access are documented as having no standard usage quotas, subject to abuse protection and the developer terms.
+
+Full reference: https://ani.pm/developers
+
+7. Watch Progress and Continue Watching
+
+For providers that support media-data messages, your application can save progress locally or send it to your own backend.
+
+7.1 Store progress
+
+A minimal local implementation:
+
+function saveProgress(key, data) {
+  localStorage.setItem(key, JSON.stringify(data));
+}
+
+function readProgress(key) {
+  const saved = localStorage.getItem(key);
+  return saved ? JSON.parse(saved) : null;
+}
+
+
+For example, VidLink's media-data listener can call saveProgress("vidLinkProgress", event.data.data).
+
+7.2 Recommended data model
+
+Normalize provider data into your own application schema instead of coupling your database to one provider's payload.
+
+{
+  "provider": "vidfast",
+  "mediaId": "533535",
+  "mediaType": "movie",
+  "title": "Example Movie",
+  "season": null,
+  "episode": null,
+  "currentTime": 353.5,
+  "duration": 7667.2,
+  "updatedAt": 1742577064433
+}
+
+
+For a TV show, store season and episode values alongside the current playback position.
+
+7.3 Production recommendations
+Save progress periodically rather than on every event.
+Save again on pause, seek, and playback completion when the provider supports those events.
+Avoid overwriting newer progress with older asynchronous updates.
+Store progress on your backend if it must follow users across devices.
+Treat iframe messages as untrusted input, even when they come from an expected provider.
+Handle missing media fields and zero-duration updates gracefully.
+
+Important: Each provider has its own event format and storage structure. Do not assume that a listener or progress schema for one provider will work with another.
+
+8. Provider Comparison
+Feature	VidFast	VidLink	VidCore	VidRock	Ani.pm
+Movies	Yes	Yes	Yes	Yes	Anime titles
+TV shows	Yes	Yes	Yes	Yes	Anime episodes
+Anime-specific URLs	No documented endpoint	Yes	No documented endpoint	No documented endpoint	Yes
+Custom player colors	Yes	Yes	Yes	Yes	Yes
+Watch progress	Yes	Yes	Yes	Yes	Yes, via SDK/events
+Playback commands	Yes	Not documented here	Yes	Not documented here	Yes
+Public catalogue API	Not documented here	Not documented here	Not documented here	Movie/TV lists	Yes
+JavaScript SDK	Not documented here	Not documented here	Not documented here	Not documented here	Yes
+
+“Not documented here” means the supplied reference material does not establish the feature. It does not necessarily mean the provider lacks it.
+
+9. Integration Best Practices
+Build embed URLs safely
+
+Use URL and URLSearchParams instead of concatenating user-controlled strings.
+
+function createMovieUrl(provider, id, options = {}) {
+  const baseUrls = {
+    vidfast: "https://vidfast.vc",
+    vidlink: "https://vidlink.pro",
+    vidcore: "https://vidcore.io",
+    vidrock: "https://vidrock.net"
+  };
+
+  const base = baseUrls[provider];
+
+  if (!base) {
+    throw new Error("Unsupported provider");
+  }
+
+  const url = new URL(`/movie/${encodeURIComponent(id)}`, base);
+
+  for (const [key, value] of Object.entries(options)) {
+    if (value !== undefined && value !== null) {
+      url.searchParams.set(key, String(value));
+    }
+  }
+
+  return url.toString();
+}
+
+const embedUrl = createMovieUrl("vidfast", "533535", {
+  autoPlay: true,
+  theme: "16A085"
+});
+
+
+Parameter names are provider-specific. Do not reuse one provider's parameter names for another without checking its documentation.
+
+Validate iframe messages
+
+Always validate the message origin before trusting data from an embedded player. Where practical, also validate event.source against the iframe's contentWindow, check the message type, and validate expected field types.
+
+Avoid using "*" as the target origin when sending control commands if the expected iframe origin is known.
+
+Handle player failures
+
+Your integration should handle:
+
+Unavailable media or episodes.
+Unsupported language or subtitle tracks.
+Autoplay restrictions.
+Missing or malformed message data.
+Iframe reloads and navigation.
+Network delays and interrupted playback.
+Provider-specific error messages.
+React and Next.js
+
+Register message listeners inside an effect and remove them during cleanup.
+
+import { useEffect } from "react";
+
+export function usePlayerEvents(onPlayerEvent) {
+  useEffect(() => {
+    function handleMessage(event) {
+      if (event.origin !== "https://vidfast.vc") return;
+      if (event.data?.type !== "PLAYER_EVENT") return;
+
+      onPlayerEvent(event.data.data);
+    }
+
+    window.addEventListener("message", handleMessage);
+
+    return () => {
+      window.removeEventListener("message", handleMessage);
+    };
+  }, [onPlayerEvent]);
+}
+
+
+Use a stable callback for onPlayerEvent to avoid unnecessary listener re-registration.
+
+10. Reference and Troubleshooting
+Common issues
+
+The player does not load
+
+Confirm the URL format and media identifier.
+Check that the requested season and episode exist.
+Verify that your Content Security Policy permits the provider's iframe origin.
+Inspect browser developer tools for iframe or network errors.
+
+Autoplay does not work
+
+Browser policies may block autoplay with sound.
+Try a user-initiated play action or a supported muted autoplay option.
+
+Watch progress is not saved
+
+Confirm the provider emits the expected message type.
+Check the event origin.
+Verify that the message payload contains the fields your code expects.
+Check local storage and backend requests for errors.
+
+The next episode does not play
+
+Confirm that the provider supports next-episode playback.
+Check whether the next-episode button must be enabled before auto-next can work.
+Verify that another episode is available.
+
+A player command has no effect
+
+Confirm that the command is supported by that provider.
+Ensure the iframe reference is valid and loaded.
+Verify the target origin and command payload.
+Check whether the provider requires a different message protocol.
+Official references
+VidFast
+VidLink
+VidCore
+VidRock
+Ani.pm Developer Documentation
+Ani.pm TypeScript Definitions
+
+For provider-specific features, event schemas, defaults, and availability, consult the relevant official documentation before deploying an integration.
